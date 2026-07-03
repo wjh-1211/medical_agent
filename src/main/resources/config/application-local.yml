@@ -1,0 +1,9 @@
+runtime:
+  environment: local
+
+model:
+  name: qwen3-14b
+
+cache:
+  enabled: false
+  provider: none

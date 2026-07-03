@@ -1,0 +1,12 @@
+runtime:
+  environment: test
+  maxReActLoops: 3
+
+model:
+  name: qwen3-test
+  temperature: 0.0
+
+timeout:
+  modelCallMillis: 5000
+  toolCallMillis: 1000
+  memoryCallMillis: 1000

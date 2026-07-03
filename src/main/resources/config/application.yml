@@ -1,0 +1,41 @@
+runtime:
+  environment: local
+  maxReActLoops: 5
+  toolLoggingEnabled: true
+
+model:
+  provider: local
+  name: qwen3
+  temperature: 0.2
+  maxTokens: 2048
+  functionCallingEnabled: true
+
+memory:
+  sessionStore: redis
+  sessionTtlMinutes: 30
+  longTermStore: mem0
+  preferenceStore: mysql
+
+guardrail:
+  emergencyDetectionEnabled: true
+  riskAssessmentEnabled: true
+  groundingCheckEnabled: true
+  autoDisclaimerEnabled: true
+
+timeout:
+  modelCallMillis: 15000
+  toolCallMillis: 3000
+  memoryCallMillis: 2000
+
+cache:
+  enabled: false
+  provider: none
+  ttlSeconds: 0
+
+skills:
+  echoSkill:
+    enabled: true
+    toolName: echo_input
+    implementation: com.medicalagent.skills.EchoSkill
+    options:
+      owner: framework

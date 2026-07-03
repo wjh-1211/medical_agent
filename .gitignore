@@ -1,0 +1,6 @@
+*.md
+*.docx
+prompts/
+.tools/
+.mvn/wrapper/apache-maven-*/
+target/
