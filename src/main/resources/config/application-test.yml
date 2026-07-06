@@ -2,9 +2,17 @@ runtime:
   environment: test
   maxReActLoops: 3
 
+prompt:
+  defaultTemplate: medical-agent-answer
+
 model:
+  provider: stub
   name: qwen3-test
+  path: /tmp/stub-model
   temperature: 0.0
+  maxTokens: 256
+  pythonExecutable: python3
+  launcherScript: scripts/local_model_inference.py
 
 timeout:
   modelCallMillis: 5000

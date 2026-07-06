@@ -16,6 +16,11 @@ class ConfigLoaderTest {
         AppConfig config = new ConfigLoader().load("test");
 
         assertEquals("test", config.getRuntime().getEnvironment());
+        assertEquals("/api/agent", config.getApi().getBasePath());
+        assertEquals("anonymous", config.getSession().getAnonymousUserIdPrefix());
+        assertEquals("prompts", config.getPrompt().getDirectory());
+        assertEquals("medical-agent-answer", config.getPrompt().getDefaultTemplate());
+        assertEquals("stub", config.getModel().getProvider());
         assertEquals(3, config.getRuntime().getMaxReActLoops());
         assertEquals("qwen3-test", config.getModel().getName());
         assertEquals(1000, config.getTimeout().getToolCallMillis());

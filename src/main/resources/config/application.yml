@@ -3,9 +3,30 @@ runtime:
   maxReActLoops: 5
   toolLoggingEnabled: true
 
+api:
+  enabled: true
+  host: 127.0.0.1
+  port: 8080
+  basePath: /api/agent
+  requestTimeoutMillis: 8000
+
+session:
+  autoCreateSessionId: true
+  allowAnonymousUser: true
+  anonymousUserIdPrefix: anonymous
+
+prompt:
+  directory: prompts
+  defaultTemplate: medical-agent-answer
+  fileExtension: .prompt.md
+  strictVariables: true
+
 model:
-  provider: local
+  provider: python_transformers
   name: qwen3
+  path: /mnt/Data/multi-agent/DeepSeek-R1-Distill-Qwen-7B
+  pythonExecutable: python3
+  launcherScript: scripts/local_model_inference.py
   temperature: 0.2
   maxTokens: 2048
   functionCallingEnabled: true

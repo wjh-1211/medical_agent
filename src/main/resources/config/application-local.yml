@@ -2,7 +2,11 @@ runtime:
   environment: local
 
 model:
-  name: qwen3-14b
+  provider: python_transformers
+  name: DeepSeek-R1-Distill-Qwen-7B
+  path: /mnt/Data/multi-agent/DeepSeek-R1-Distill-Qwen-7B
+  pythonExecutable: python3
+  launcherScript: scripts/local_model_inference.py
 
 cache:
   enabled: false

@@ -4,6 +4,9 @@ public class ModelConfig {
 
     private String provider = "local";
     private String name = "qwen3";
+    private String path = "";
+    private String pythonExecutable = "python3";
+    private String launcherScript = "scripts/local_model_inference.py";
     private double temperature = 0.2;
     private int maxTokens = 2048;
     private boolean functionCallingEnabled = true;
@@ -22,6 +25,30 @@ public class ModelConfig {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public String getPythonExecutable() {
+        return pythonExecutable;
+    }
+
+    public void setPythonExecutable(String pythonExecutable) {
+        this.pythonExecutable = pythonExecutable;
+    }
+
+    public String getLauncherScript() {
+        return launcherScript;
+    }
+
+    public void setLauncherScript(String launcherScript) {
+        this.launcherScript = launcherScript;
     }
 
     public double getTemperature() {

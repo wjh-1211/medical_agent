@@ -6,6 +6,9 @@ import java.util.Map;
 public class AppConfig {
 
     private RuntimeConfig runtime = new RuntimeConfig();
+    private ApiConfig api = new ApiConfig();
+    private SessionConfig session = new SessionConfig();
+    private PromptConfig prompt = new PromptConfig();
     private ModelConfig model = new ModelConfig();
     private MemoryConfig memory = new MemoryConfig();
     private GuardrailConfig guardrail = new GuardrailConfig();
@@ -19,6 +22,30 @@ public class AppConfig {
 
     public void setRuntime(RuntimeConfig runtime) {
         this.runtime = runtime;
+    }
+
+    public ApiConfig getApi() {
+        return api;
+    }
+
+    public void setApi(ApiConfig api) {
+        this.api = api;
+    }
+
+    public SessionConfig getSession() {
+        return session;
+    }
+
+    public void setSession(SessionConfig session) {
+        this.session = session;
+    }
+
+    public PromptConfig getPrompt() {
+        return prompt;
+    }
+
+    public void setPrompt(PromptConfig prompt) {
+        this.prompt = prompt;
     }
 
     public ModelConfig getModel() {

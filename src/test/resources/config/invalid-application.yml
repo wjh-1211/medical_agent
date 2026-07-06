@@ -1,6 +1,12 @@
 runtime:
   maxReActLoops: 0
 
+api:
+  port: 0
+
+prompt:
+  defaultTemplate: ""
+
 model:
   name: ""
 
