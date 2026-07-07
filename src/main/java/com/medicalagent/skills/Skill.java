@@ -6,7 +6,7 @@ public interface Skill {
 
     String id();
 
-    ToolSpec tool();
+    ToolSchema toolSchema();
 
     JsonNode execute(JsonNode input);
 }

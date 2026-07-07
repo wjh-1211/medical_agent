@@ -60,3 +60,9 @@ skills:
     implementation: com.medicalagent.skills.EchoSkill
     options:
       owner: framework
+  uppercaseSkill:
+    enabled: true
+    toolName: uppercase_text
+    implementation: com.medicalagent.skills.UppercaseSkill
+    options:
+      owner: framework

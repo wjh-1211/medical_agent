@@ -17,6 +17,7 @@ import com.medicalagent.prompt.PromptVariablesFactory;
 import com.medicalagent.runtime.ToolRouter;
 import com.medicalagent.skills.EchoSkill;
 import com.medicalagent.skills.SkillRegistry;
+import com.medicalagent.skills.UppercaseSkill;
 
 import java.io.IOException;
 import java.util.List;
@@ -26,7 +27,7 @@ public class MedicalAgentApplication {
     public static void main(String[] args) throws IOException {
         String profile = System.getProperty("app.profile", "local");
         AppConfig appConfig = new ConfigLoader().load(profile);
-        SkillRegistry skillRegistry = new SkillRegistry(appConfig, List.of(new EchoSkill()));
+        SkillRegistry skillRegistry = new SkillRegistry(appConfig, List.of(new EchoSkill(), new UppercaseSkill()));
         ToolRouter toolRouter = new ToolRouter(skillRegistry);
         LocalModelGateway localModelGateway = new LocalModelGatewayRegistry(List.of(
                 new StubLocalModelGatewayFactory(),

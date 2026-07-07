@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.medicalagent.common.JsonSupport;
 
-public class EchoSkill implements Skill {
+public class UppercaseSkill implements Skill {
 
     @Override
     public String id() {
-        return "echoSkill";
+        return "uppercaseSkill";
     }
 
     @Override
@@ -19,8 +19,8 @@ public class EchoSkill implements Skill {
         properties.putObject("message").put("type", "string");
         schema.putArray("required").add("message");
         return new ToolSchema(
-                "echo_input",
-                "Return the received payload as structured observation for router integration tests.",
+                "uppercase_text",
+                "Convert the incoming message to uppercase as a deterministic sample tool.",
                 schema
         );
     }
@@ -29,8 +29,9 @@ public class EchoSkill implements Skill {
     public JsonNode execute(JsonNode input) {
         ObjectNode output = JsonSupport.NODE_FACTORY.objectNode();
         output.put("skill", id());
-        output.set("input", input);
         output.put("status", "ok");
+        output.put("original", input.path("message").asText());
+        output.put("transformed", input.path("message").asText().toUpperCase());
         return output;
     }
 }
