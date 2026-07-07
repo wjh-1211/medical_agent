@@ -1,10 +1,13 @@
 package com.medicalagent.prompt;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.medicalagent.api.AgentMessage;
 import com.medicalagent.common.JsonSupport;
 import com.medicalagent.context.AgentContext;
+import com.medicalagent.skills.ToolSchema;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +16,10 @@ import java.util.stream.Collectors;
 public class PromptVariablesFactory {
 
     public Map<String, String> create(AgentContext context) {
+        return create(context, List.of(), List.of());
+    }
+
+    public Map<String, String> create(AgentContext context, Collection<ToolSchema> availableTools, List<JsonNode> observations) {
         Map<String, String> variables = new LinkedHashMap<>();
         variables.put("requestId", context.getRequestId());
         variables.put("sessionId", context.getSessionId());
@@ -24,6 +31,8 @@ public class PromptVariablesFactory {
         variables.put("emergencyFlag", context.getEmergencyFlag() == null ? "unknown" : context.getEmergencyFlag().toString());
         variables.put("metadata", formatMetadata(context.getMetadata()));
         variables.put("createdAt", context.getCreatedAt().toString());
+        variables.put("availableTools", formatAvailableTools(availableTools));
+        variables.put("observations", formatObservations(observations));
         return variables;
     }
 
@@ -51,6 +60,26 @@ public class PromptVariablesFactory {
         return metadata.entrySet().stream()
                 .map(entry -> entry.getKey() + "=" + entry.getValue())
                 .collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    private String formatAvailableTools(Collection<ToolSchema> availableTools) {
+        if (availableTools == null || availableTools.isEmpty()) {
+            return "No tools registered.";
+        }
+        try {
+            return JsonSupport.JSON_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(availableTools);
+        } catch (JsonProcessingException exception) {
+            throw new IllegalStateException("Failed to serialize availableTools to prompt variables", exception);
+        }
+    }
+
+    private String formatObservations(List<JsonNode> observations) {
+        if (observations == null || observations.isEmpty()) {
+            return "No observations yet.";
+        }
+        return observations.stream()
+                .map(this::formatJson)
+                .collect(Collectors.joining(System.lineSeparator() + System.lineSeparator()));
     }
 
     private String defaultText(String value, String fallback) {

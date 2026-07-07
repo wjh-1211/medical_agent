@@ -3,7 +3,7 @@ package com.medicalagent.config;
 public class PromptConfig {
 
     private String directory = "prompts";
-    private String defaultTemplate = "medical-agent-answer";
+    private String defaultTemplate = "medical-agent-react";
     private String fileExtension = ".prompt.md";
     private boolean strictVariables = true;
 

@@ -70,6 +70,10 @@ public class SkillRegistry {
         return registrationsByToolName.values();
     }
 
+    public Collection<ToolSchema> registeredToolSchemas() {
+        return toolSchemaRegistry.registeredSchemas().values();
+    }
+
     public ToolSchemaRegistry toolSchemaRegistry() {
         return toolSchemaRegistry;
     }

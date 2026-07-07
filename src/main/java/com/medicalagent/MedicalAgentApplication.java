@@ -1,6 +1,7 @@
 package com.medicalagent;
 
 import com.medicalagent.agent.AgentKernel;
+import com.medicalagent.agent.AgentDecisionParser;
 import com.medicalagent.api.AgentController;
 import com.medicalagent.api.AgentHttpHandler;
 import com.medicalagent.api.AgentHttpServer;
@@ -35,11 +36,13 @@ public class MedicalAgentApplication {
         )).create(appConfig);
         AgentKernel agentKernel = new AgentKernel(
                 appConfig,
+                skillRegistry,
                 toolRouter,
                 new FilePromptLoader(appConfig.getPrompt()),
                 new PromptVariablesFactory(),
                 new PromptRenderer(appConfig.getPrompt()),
-                localModelGateway
+                localModelGateway,
+                new AgentDecisionParser()
         );
         AgentContextFactory contextFactory = new AgentContextFactory(appConfig);
         AgentController controller = new AgentController(contextFactory, agentKernel);

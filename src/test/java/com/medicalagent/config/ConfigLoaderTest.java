@@ -19,7 +19,7 @@ class ConfigLoaderTest {
         assertEquals("/api/agent", config.getApi().getBasePath());
         assertEquals("anonymous", config.getSession().getAnonymousUserIdPrefix());
         assertEquals("prompts", config.getPrompt().getDirectory());
-        assertEquals("medical-agent-answer", config.getPrompt().getDefaultTemplate());
+        assertEquals("medical-agent-react", config.getPrompt().getDefaultTemplate());
         assertEquals("stub", config.getModel().getProvider());
         assertEquals(3, config.getRuntime().getMaxReActLoops());
         assertEquals("qwen3-test", config.getModel().getName());

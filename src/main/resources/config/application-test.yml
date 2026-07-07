@@ -3,7 +3,7 @@ runtime:
   maxReActLoops: 3
 
 prompt:
-  defaultTemplate: medical-agent-answer
+  defaultTemplate: medical-agent-react
 
 model:
   provider: stub

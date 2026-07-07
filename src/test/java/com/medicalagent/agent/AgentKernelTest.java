@@ -2,6 +2,7 @@ package com.medicalagent.agent;
 
 import com.medicalagent.api.AgentRequest;
 import com.medicalagent.api.AgentResponse;
+import com.medicalagent.agent.AgentDecisionParser;
 import com.medicalagent.common.JsonSupport;
 import com.medicalagent.config.AppConfig;
 import com.medicalagent.config.ConfigLoader;
@@ -16,6 +17,7 @@ import com.medicalagent.prompt.PromptVariablesFactory;
 import com.medicalagent.runtime.ToolRouter;
 import com.medicalagent.skills.EchoSkill;
 import com.medicalagent.skills.SkillRegistry;
+import com.medicalagent.skills.UppercaseSkill;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -27,11 +29,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class AgentKernelTest {
 
     @Test
-    void shouldLoadPromptAndCallConfiguredModelGateway() {
+    void shouldLoadPromptCallToolAndReturnFinalAnswer() {
         AppConfig config = new ConfigLoader().load("test");
-        SkillRegistry registry = new SkillRegistry(config, List.of(new EchoSkill()));
+        SkillRegistry registry = new SkillRegistry(config, List.of(new EchoSkill(), new UppercaseSkill()));
         AgentKernel kernel = new AgentKernel(
                 config,
+                registry,
                 new ToolRouter(registry),
                 new FilePromptLoader(config.getPrompt()),
                 new PromptVariablesFactory(),
@@ -39,7 +42,8 @@ class AgentKernelTest {
                 new LocalModelGatewayRegistry(List.of(
                         new StubLocalModelGatewayFactory(),
                         new PythonTransformersLocalModelGatewayFactory()
-                )).create(config)
+                )).create(config),
+                new AgentDecisionParser()
         );
         AgentContext context = new AgentContextFactory(config).create(new AgentRequest(
                 "Need advice for sore throat",
@@ -55,7 +59,7 @@ class AgentKernelTest {
         AgentResponse response = kernel.handle(context);
 
         assertEquals("ok", response.status());
-        assertTrue(response.answer().contains("stub-response:"));
-        assertTrue(response.answer().contains("Need advice for sore throat"));
+        assertTrue(response.answer().contains("stub-final-answer:"));
+        assertTrue(response.answer().contains("uppercase_text"));
     }
 }

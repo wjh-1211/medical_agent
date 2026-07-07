@@ -1,6 +1,7 @@
 package com.medicalagent.api;
 
 import com.medicalagent.agent.AgentKernel;
+import com.medicalagent.agent.AgentDecisionParser;
 import com.medicalagent.config.AppConfig;
 import com.medicalagent.config.ConfigLoader;
 import com.medicalagent.context.AgentContextFactory;
@@ -13,6 +14,7 @@ import com.medicalagent.prompt.PromptVariablesFactory;
 import com.medicalagent.runtime.ToolRouter;
 import com.medicalagent.skills.EchoSkill;
 import com.medicalagent.skills.SkillRegistry;
+import com.medicalagent.skills.UppercaseSkill;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -68,9 +70,10 @@ class AgentControllerTest {
     }
 
     private AgentKernel createKernel(AppConfig config) {
-        SkillRegistry registry = new SkillRegistry(config, List.of(new EchoSkill()));
+        SkillRegistry registry = new SkillRegistry(config, List.of(new EchoSkill(), new UppercaseSkill()));
         return new AgentKernel(
                 config,
+                registry,
                 new ToolRouter(registry),
                 new FilePromptLoader(config.getPrompt()),
                 new PromptVariablesFactory(),
@@ -78,7 +81,8 @@ class AgentControllerTest {
                 new LocalModelGatewayRegistry(List.of(
                         new StubLocalModelGatewayFactory(),
                         new PythonTransformersLocalModelGatewayFactory()
-                )).create(config)
+                )).create(config),
+                new AgentDecisionParser()
         );
     }
 }
