@@ -32,7 +32,7 @@ model:
   functionCallingEnabled: true
 
 memory:
-  sessionStore: redis
+  sessionStore: in_memory
   sessionTtlMinutes: 30
   longTermStore: mem0
   preferenceStore: mysql
@@ -64,5 +64,17 @@ skills:
     enabled: true
     toolName: uppercase_text
     implementation: com.medicalagent.skills.UppercaseSkill
+    options:
+      owner: framework
+  memoryReadSkill:
+    enabled: true
+    toolName: session_memory_read
+    implementation: com.medicalagent.skills.MemoryReadSkill
+    options:
+      owner: framework
+  memoryWriteSkill:
+    enabled: true
+    toolName: session_memory_write
+    implementation: com.medicalagent.skills.MemoryWriteSkill
     options:
       owner: framework

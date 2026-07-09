@@ -32,7 +32,7 @@ public class StubLocalModelGateway implements LocalModelGateway {
 
     private String generateStructuredResponse(String prompt) {
         if (hasObservation(prompt)) {
-            return buildFinalAnswerResponse(extractLatestObservation(prompt));
+            return buildFinalAnswerResponse(extractLatestObservation(prompt), extractMemorySummary(prompt));
         }
         return buildToolCallResponse(extractCurrentMessage(prompt));
     }
@@ -74,6 +74,14 @@ public class StubLocalModelGateway implements LocalModelGateway {
         return endIndex >= 0 ? remaining.substring(0, endIndex).trim() : remaining;
     }
 
+    private String extractMemorySummary(String prompt) {
+        String memorySummary = extractSection(prompt, "Memory Summary:", "Tool Facts:");
+        if (memorySummary == null || memorySummary.isBlank()) {
+            return "N/A";
+        }
+        return memorySummary.replaceAll("\\s+", " ").trim();
+    }
+
     private String buildToolCallResponse(String message) {
         ObjectNode root = JsonSupport.NODE_FACTORY.objectNode();
         root.put("type", "tool_call");
@@ -82,10 +90,10 @@ public class StubLocalModelGateway implements LocalModelGateway {
         return root.toString();
     }
 
-    private String buildFinalAnswerResponse(String observation) {
+    private String buildFinalAnswerResponse(String observation, String memorySummary) {
         ObjectNode root = JsonSupport.NODE_FACTORY.objectNode();
         root.put("type", "final_answer");
-        root.put("answer", "stub-final-answer: " + observation);
+        root.put("answer", "stub-final-answer: memory=" + memorySummary + " observation=" + observation);
         return root.toString();
     }
 }

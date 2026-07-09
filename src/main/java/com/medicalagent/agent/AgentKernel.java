@@ -14,6 +14,8 @@ import com.medicalagent.prompt.PromptRenderer;
 import com.medicalagent.prompt.PromptTemplate;
 import com.medicalagent.prompt.PromptVariablesFactory;
 import com.medicalagent.runtime.ToolRouter;
+import com.medicalagent.skills.MemoryReadSkill;
+import com.medicalagent.skills.MemoryWriteSkill;
 import com.medicalagent.skills.SkillRegistry;
 import com.medicalagent.skills.ToolSchema;
 
@@ -34,6 +36,8 @@ public record AgentKernel(
 ) {
 
     public AgentResponse handle(AgentContext context) {
+        JsonNode recalledSessionMemory = recallSessionMemory(context);
+        AgentContext promptContext = augmentContextWithSessionMemory(context, recalledSessionMemory);
         PromptTemplate promptTemplate = promptLoader.load(config.getPrompt().getDefaultTemplate());
         Collection<ToolSchema> availableTools = skillRegistry.registeredToolSchemas();
         List<JsonNode> observations = new ArrayList<>();
@@ -41,7 +45,7 @@ public record AgentKernel(
         String finalAnswer = null;
 
         for (int loop = 0; loop < maxLoops; loop++) {
-            Map<String, String> promptVariables = promptVariablesFactory.create(context, availableTools, observations);
+            Map<String, String> promptVariables = promptVariablesFactory.create(promptContext, availableTools, observations);
             String renderedPrompt = promptRenderer.render(promptTemplate, promptVariables);
             LocalModelResponse modelResponse = localModelGateway.generate(new LocalModelRequest(
                     renderedPrompt,
@@ -63,6 +67,8 @@ public record AgentKernel(
         if (finalAnswer == null) {
             throw new IllegalStateException("Agent did not reach final_answer within maxReActLoops=" + maxLoops);
         }
+
+        writeSessionMemory(context, finalAnswer);
 
         return new AgentResponse(
                 "ok",
@@ -88,5 +94,59 @@ public record AgentKernel(
         observation.set("input", decision.input());
         observation.set("result", toolResult);
         return observation;
+    }
+
+    private JsonNode recallSessionMemory(AgentContext context) {
+        if (skillRegistry.findRegistrationByToolName(MemoryReadSkill.TOOL_NAME).isEmpty()) {
+            return JsonSupport.NODE_FACTORY.objectNode();
+        }
+        ObjectNode input = JsonSupport.NODE_FACTORY.objectNode();
+        input.put("sessionId", context.getSessionId());
+        return toolRouter.route(MemoryReadSkill.TOOL_NAME, input);
+    }
+
+    private void writeSessionMemory(AgentContext context, String finalAnswer) {
+        if (skillRegistry.findRegistrationByToolName(MemoryWriteSkill.TOOL_NAME).isEmpty()) {
+            return;
+        }
+        ObjectNode input = JsonSupport.NODE_FACTORY.objectNode();
+        input.put("sessionId", context.getSessionId());
+        input.put("userMessage", context.getMessage());
+        input.put("agentAnswer", finalAnswer);
+        toolRouter.route(MemoryWriteSkill.TOOL_NAME, input);
+    }
+
+    private AgentContext augmentContextWithSessionMemory(AgentContext original, JsonNode recalledSessionMemory) {
+        if (!recalledSessionMemory.path("found").asBoolean(false)) {
+            return original;
+        }
+        String combinedSummary = combineMemorySummaries(original.getMemorySummary(), recalledSessionMemory.path("memorySummary").asText());
+        ObjectNode mergedToolFacts = original.getToolFacts().deepCopy();
+        mergedToolFacts.set("sessionMemory", recalledSessionMemory);
+        return AgentContext.builder()
+                .requestId(original.getRequestId())
+                .sessionId(original.getSessionId())
+                .userId(original.getUserId())
+                .message(original.getMessage())
+                .history(original.getHistory())
+                .memorySummary(combinedSummary)
+                .toolFacts(mergedToolFacts)
+                .emergencyFlag(original.getEmergencyFlag())
+                .metadata(original.getMetadata())
+                .createdAt(original.getCreatedAt())
+                .requestTimeoutMillis(original.getRequestTimeoutMillis())
+                .build();
+    }
+
+    private String combineMemorySummaries(String existing, String recalled) {
+        String normalizedExisting = existing == null || existing.isBlank() ? null : existing.trim();
+        String normalizedRecalled = recalled == null || recalled.isBlank() ? null : recalled.trim();
+        if (normalizedExisting == null) {
+            return normalizedRecalled;
+        }
+        if (normalizedRecalled == null) {
+            return normalizedExisting;
+        }
+        return normalizedExisting + System.lineSeparator() + System.lineSeparator() + normalizedRecalled;
     }
 }
