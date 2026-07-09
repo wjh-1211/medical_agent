@@ -45,6 +45,8 @@ public class MedicalAgentApplication {
                 new StubLocalModelGatewayFactory(),
                 new PythonTransformersLocalModelGatewayFactory()
         )).create(appConfig);
+        localModelGateway.preload();
+        Runtime.getRuntime().addShutdownHook(new Thread(localModelGateway::shutdown, "api-local-model-shutdown"));
         AgentKernel agentKernel = new AgentKernel(
                 appConfig,
                 skillRegistry,

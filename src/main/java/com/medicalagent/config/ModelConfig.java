@@ -8,7 +8,7 @@ public class ModelConfig {
     private String pythonExecutable = "python3";
     private String launcherScript = "scripts/local_model_inference.py";
     private double temperature = 0.2;
-    private int maxTokens = 2048;
+    private int maxTokens = 128;
     private boolean functionCallingEnabled = true;
 
     public String getProvider() {

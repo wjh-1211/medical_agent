@@ -1,6 +1,6 @@
 runtime:
   environment: local
-  maxReActLoops: 5
+  maxReActLoops: 3
   toolLoggingEnabled: true
 
 api:
@@ -28,7 +28,7 @@ model:
   pythonExecutable: python3
   launcherScript: scripts/local_model_inference.py
   temperature: 0.2
-  maxTokens: 2048
+  maxTokens: 128
   functionCallingEnabled: true
 
 memory:
@@ -44,7 +44,7 @@ guardrail:
   autoDisclaimerEnabled: true
 
 timeout:
-  modelCallMillis: 15000
+  modelCallMillis: 30000
   toolCallMillis: 3000
   memoryCallMillis: 2000
 

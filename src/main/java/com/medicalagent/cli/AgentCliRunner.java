@@ -58,7 +58,11 @@ public class AgentCliRunner {
             }
 
             try {
-                AgentResponse response = requestHandler.apply(buildRequest(command.payload()));
+                AgentResponse response;
+                try (CliRequestTimer timer = new CliRequestTimer(console)) {
+                    timer.start();
+                    response = requestHandler.apply(buildRequest(command.payload()));
+                }
                 console.println("Agent> " + response.answer());
                 session.appendTurn(command.payload(), response.answer());
             } catch (RuntimeException exception) {

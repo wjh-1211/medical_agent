@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public record AgentKernel(
         AppConfig config,
@@ -35,7 +36,10 @@ public record AgentKernel(
         AgentDecisionParser agentDecisionParser
 ) {
 
+    private static final Logger LOGGER = Logger.getLogger(AgentKernel.class.getName());
+
     public AgentResponse handle(AgentContext context) {
+        long requestStartedAt = System.nanoTime();
         JsonNode recalledSessionMemory = recallSessionMemory(context);
         AgentContext promptContext = augmentContextWithSessionMemory(context, recalledSessionMemory);
         PromptTemplate promptTemplate = promptLoader.load(config.getPrompt().getDefaultTemplate());
@@ -43,6 +47,10 @@ public record AgentKernel(
         List<JsonNode> observations = new ArrayList<>();
         int maxLoops = Math.max(1, config.getRuntime().getMaxReActLoops());
         String finalAnswer = null;
+        long totalModelMillis = 0L;
+        int totalPromptCharacters = 0;
+        int totalOutputCharacters = 0;
+        int loopsUsed = 0;
 
         for (int loop = 0; loop < maxLoops; loop++) {
             Map<String, String> promptVariables = promptVariablesFactory.create(promptContext, availableTools, observations);
@@ -56,6 +64,10 @@ public record AgentKernel(
                     config.getModel().isFunctionCallingEnabled(),
                     config.getTimeout().getModelCallMillis()
             ));
+            totalModelMillis += modelResponse.elapsedMillis();
+            totalPromptCharacters += modelResponse.promptCharacters();
+            totalOutputCharacters += modelResponse.outputCharacters();
+            loopsUsed = loop + 1;
             AgentDecision decision = agentDecisionParser.parse(modelResponse.content());
             if (decision.type() == AgentDecision.Type.FINAL_ANSWER) {
                 finalAnswer = decision.answer();
@@ -69,6 +81,7 @@ public record AgentKernel(
         }
 
         writeSessionMemory(context, finalAnswer);
+        logPerformanceSummary(context, requestStartedAt, loopsUsed, totalModelMillis, totalPromptCharacters, totalOutputCharacters);
 
         return new AgentResponse(
                 "ok",
@@ -148,5 +161,29 @@ public record AgentKernel(
             return normalizedExisting;
         }
         return normalizedExisting + System.lineSeparator() + System.lineSeparator() + normalizedRecalled;
+    }
+
+    private void logPerformanceSummary(
+            AgentContext context,
+            long requestStartedAt,
+            int loopsUsed,
+            long totalModelMillis,
+            int totalPromptCharacters,
+            int totalOutputCharacters
+    ) {
+        if (!config.getRuntime().isToolLoggingEnabled()) {
+            return;
+        }
+        if ("cli".equals(context.getMetadata().getOrDefault("channel", ""))) {
+            return;
+        }
+        long totalElapsedMillis = (System.nanoTime() - requestStartedAt) / 1_000_000L;
+        LOGGER.info(() -> "[perf] requestId=" + context.getRequestId()
+                + " channel=" + context.getMetadata().getOrDefault("channel", "unknown")
+                + " loops=" + loopsUsed
+                + " totalMs=" + totalElapsedMillis
+                + " modelMs=" + totalModelMillis
+                + " promptChars=" + totalPromptCharacters
+                + " outputChars=" + totalOutputCharacters);
     }
 }

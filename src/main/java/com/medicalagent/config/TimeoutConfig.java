@@ -2,7 +2,7 @@ package com.medicalagent.config;
 
 public class TimeoutConfig {
 
-    private int modelCallMillis = 15_000;
+    private int modelCallMillis = 30_000;
     private int toolCallMillis = 3_000;
     private int memoryCallMillis = 2_000;
 

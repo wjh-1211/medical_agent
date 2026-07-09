@@ -8,12 +8,19 @@ import com.medicalagent.context.AgentContext;
 import com.medicalagent.skills.ToolSchema;
 
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class PromptVariablesFactory {
+
+    private static final int MAX_HISTORY_MESSAGES = 4;
+    private static final int MAX_OBSERVATIONS = 2;
+    private static final int MAX_MESSAGE_LENGTH = 180;
+    private static final int MAX_JSON_LENGTH = 1200;
 
     public Map<String, String> create(AgentContext context) {
         return create(context, List.of(), List.of());
@@ -40,14 +47,17 @@ public class PromptVariablesFactory {
         if (history == null || history.isEmpty()) {
             return "No prior history.";
         }
-        return history.stream()
-                .map(message -> message.role() + ": " + message.content())
+        List<AgentMessage> recentMessages = history.stream()
+                .skip(Math.max(0, history.size() - MAX_HISTORY_MESSAGES))
+                .toList();
+        return recentMessages.stream()
+                .map(message -> message.role() + ": " + compactText(message.content(), MAX_MESSAGE_LENGTH))
                 .collect(Collectors.joining(System.lineSeparator()));
     }
 
     private String formatJson(com.fasterxml.jackson.databind.JsonNode jsonNode) {
         try {
-            return JsonSupport.JSON_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(jsonNode);
+            return compactText(JsonSupport.JSON_MAPPER.writeValueAsString(jsonNode), MAX_JSON_LENGTH);
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Failed to serialize toolFacts to prompt variables", exception);
         }
@@ -66,18 +76,20 @@ public class PromptVariablesFactory {
         if (availableTools == null || availableTools.isEmpty()) {
             return "No tools registered.";
         }
-        try {
-            return JsonSupport.JSON_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(availableTools);
-        } catch (JsonProcessingException exception) {
-            throw new IllegalStateException("Failed to serialize availableTools to prompt variables", exception);
-        }
+        return availableTools.stream()
+                .sorted(Comparator.comparing(ToolSchema::name))
+                .map(this::formatToolSummary)
+                .collect(Collectors.joining(System.lineSeparator()));
     }
 
     private String formatObservations(List<JsonNode> observations) {
         if (observations == null || observations.isEmpty()) {
             return "No observations yet.";
         }
-        return observations.stream()
+        List<JsonNode> recentObservations = observations.stream()
+                .skip(Math.max(0, observations.size() - MAX_OBSERVATIONS))
+                .toList();
+        return recentObservations.stream()
                 .map(this::formatJson)
                 .collect(Collectors.joining(System.lineSeparator() + System.lineSeparator()));
     }
@@ -87,5 +99,35 @@ public class PromptVariablesFactory {
             return fallback;
         }
         return value;
+    }
+
+    private String formatToolSummary(ToolSchema schema) {
+        JsonNode properties = schema.inputSchema().path("properties");
+        List<String> argumentNames = extractPropertyNames(properties);
+        String compactArguments = argumentNames.isEmpty() ? "" : "(" + String.join(", ", argumentNames) + ")";
+        return "- " + schema.name() + compactArguments + ": " + compactText(schema.description(), 120);
+    }
+
+    private List<String> extractPropertyNames(JsonNode properties) {
+        if (!properties.isObject()) {
+            return List.of();
+        }
+        Iterator<String> fieldNames = properties.fieldNames();
+        List<String> names = new java.util.ArrayList<>();
+        while (fieldNames.hasNext()) {
+            names.add(fieldNames.next());
+        }
+        return names;
+    }
+
+    private String compactText(String value, int maxLength) {
+        if (value == null || value.isBlank()) {
+            return "N/A";
+        }
+        String compact = value.replaceAll("\\s+", " ").trim();
+        if (compact.length() <= maxLength) {
+            return compact;
+        }
+        return compact.substring(0, Math.max(0, maxLength - 3)) + "...";
     }
 }

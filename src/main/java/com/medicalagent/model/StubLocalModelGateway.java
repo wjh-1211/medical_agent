@@ -27,7 +27,14 @@ public class StubLocalModelGateway implements LocalModelGateway {
         String content = request.functionCallingEnabled()
                 ? generateStructuredResponse(request.prompt())
                 : "stub-response: " + extractCurrentMessage(request.prompt());
-        return new LocalModelResponse(content, request.modelName(), provider());
+        return new LocalModelResponse(
+                content,
+                request.modelName(),
+                provider(),
+                0L,
+                request.prompt() == null ? 0 : request.prompt().length(),
+                content.length()
+        );
     }
 
     private String generateStructuredResponse(String prompt) {

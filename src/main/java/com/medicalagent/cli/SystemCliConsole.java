@@ -32,6 +32,12 @@ public class SystemCliConsole implements CliConsole {
     }
 
     @Override
+    public void print(String message) {
+        out.print(message);
+        out.flush();
+    }
+
+    @Override
     public void println(String message) {
         out.println(message);
         out.flush();

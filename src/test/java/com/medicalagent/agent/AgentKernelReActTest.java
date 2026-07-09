@@ -38,7 +38,7 @@ class AgentKernelReActTest {
                 () -> kernel.handle(createContext(config))
         );
 
-        assertEquals("Model response must be valid JSON", exception.getMessage());
+        assertEquals("Model response must be valid JSON: not-json", exception.getMessage());
     }
 
     @Test
@@ -139,7 +139,14 @@ class AgentKernelReActTest {
                       "answer": "fallback"
                     }
                     """ : responses.remove();
-            return new LocalModelResponse(content, request.modelName(), provider());
+            return new LocalModelResponse(
+                    content,
+                    request.modelName(),
+                    provider(),
+                    0L,
+                    request.prompt().length(),
+                    content.length()
+            );
         }
     }
 }
