@@ -40,7 +40,7 @@ Response Contract:
 - If you can answer the user now, respond with:
   {"type":"final_answer","answer":"warmup"}
 """
-ASSISTANT_JSON_PREFIX = "<｜Assistant｜>{"
+ASSISTANT_JSON_PREFIX = "<｜Assistant｜><think></think>\n{"
 
 
 def emit(message: dict) -> None:
@@ -109,7 +109,8 @@ def generate_content(request: dict, tokenizer, model) -> str:
     prompt_tokens = inputs["input_ids"].shape[-1]
     generated_tokens = outputs[0][prompt_tokens:]
     decoded = tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
-    return normalize_generated_content("{" + decoded)
+    generated_content = decoded if decoded.startswith("{") else "{" + decoded
+    return normalize_generated_content(generated_content)
 
 
 def normalize_generated_content(decoded: str) -> str:
@@ -118,7 +119,24 @@ def normalize_generated_content(decoded: str) -> str:
         content = content.split("</think>")[-1].strip()
     if "<｜Assistant｜>" in content:
         content = content.split("<｜Assistant｜>")[-1].strip()
-    return content
+    return extract_last_decision_json(content)
+
+
+def extract_last_decision_json(content: str) -> str:
+    decoder = json.JSONDecoder()
+    decision = None
+    for index, character in enumerate(content):
+        if character != "{":
+            continue
+        try:
+            candidate, _ = decoder.raw_decode(content[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(candidate, dict) and candidate.get("type"):
+            decision = candidate
+    if decision is None:
+        return content
+    return json.dumps(decision, ensure_ascii=False, separators=(",", ":"))
 
 
 def warmup_model(tokenizer, model) -> None:

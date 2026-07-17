@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentDecisionParserTest {
 
@@ -54,6 +55,28 @@ class AgentDecisionParserTest {
 
         assertEquals(AgentDecision.Type.FINAL_ANSWER, decision.type());
         assertEquals("Wrapped answer", decision.answer());
+    }
+
+    @Test
+    void shouldRejectTruncatedFinalAnswerFromLocalModel() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> parser.parse(
+                        "{\"type\":\"final_answer\",\"answer\":\"请先补充年龄段、是否发热和药物过敏史"
+                )
+        );
+
+        assertTrue(exception.getMessage().startsWith("Model response must be valid JSON:"));
+    }
+
+    @Test
+    void shouldRejectReasoningTextThatIsNotADecision() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> parser.parse("好，我需要先判断用户情况，但还没有输出最终 JSON。")
+        );
+
+        assertTrue(exception.getMessage().startsWith("Model response must be valid JSON:"));
     }
 
     @Test

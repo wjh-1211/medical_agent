@@ -7,6 +7,11 @@ model:
   path: /mnt/Data/multi-agent/DeepSeek-R1-Distill-Qwen-7B
   pythonExecutable: python3
   launcherScript: scripts/local_model_inference.py
+  temperature: 0.0
+  maxTokens: 512
+
+timeout:
+  modelCallMillis: 60000
 
 cache:
   enabled: false
