@@ -7,6 +7,8 @@ import com.medicalagent.config.AppConfig;
 import com.medicalagent.config.ConfigLoader;
 import com.medicalagent.context.AgentContextFactory;
 import com.medicalagent.memory.InMemorySessionMemoryStore;
+import com.medicalagent.memory.LongTermMemoryStore;
+import com.medicalagent.memory.LongTermMemoryStoreFactory;
 import com.medicalagent.memory.SessionMemoryStore;
 import com.medicalagent.model.LocalModelGateway;
 import com.medicalagent.model.LocalModelGatewayRegistry;
@@ -19,6 +21,8 @@ import com.medicalagent.runtime.ToolRouter;
 import com.medicalagent.skills.EchoSkill;
 import com.medicalagent.skills.MemoryReadSkill;
 import com.medicalagent.skills.MemoryWriteSkill;
+import com.medicalagent.skills.LongTermMemoryReadSkill;
+import com.medicalagent.skills.LongTermMemoryWriteSkill;
 import com.medicalagent.skills.SkillRegistry;
 import com.medicalagent.skills.UppercaseSkill;
 
@@ -31,11 +35,14 @@ public class AgentCliApplication {
         String profile = System.getProperty("app.profile", "local");
         AppConfig appConfig = new ConfigLoader().load(profile);
         SessionMemoryStore sessionMemoryStore = new InMemorySessionMemoryStore(Duration.ofMinutes(appConfig.getMemory().getSessionTtlMinutes()));
+        LongTermMemoryStore longTermMemoryStore = new LongTermMemoryStoreFactory().create(appConfig.getMemory());
         SkillRegistry skillRegistry = new SkillRegistry(appConfig, List.of(
                 new EchoSkill(),
                 new UppercaseSkill(),
                 new MemoryReadSkill(sessionMemoryStore),
-                new MemoryWriteSkill(sessionMemoryStore)
+                new MemoryWriteSkill(sessionMemoryStore),
+                new LongTermMemoryReadSkill(longTermMemoryStore),
+                new LongTermMemoryWriteSkill(longTermMemoryStore)
         ));
         ToolRouter toolRouter = new ToolRouter(skillRegistry);
         LocalModelGateway localModelGateway = new LocalModelGatewayRegistry(List.of(

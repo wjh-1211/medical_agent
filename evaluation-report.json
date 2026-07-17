@@ -1,27 +1,40 @@
 {
-  "taskId": "T009",
-  "scenario": "详细用药建议但医疗上下文不足",
-  "date": "2026-07-16",
+  "taskId": "T010",
+  "scenario": "用户确认长期医疗事实后的跨会话 SQLite 召回",
+  "date": "2026-07-17",
   "checks": [
     {
-      "id": "prompt-follow-up-policy",
-      "description": "ReAct Prompt requires missing safety context to be clarified before detailed medication guidance",
+      "id": "sqlite-long-term-memory-persistence",
+      "description": "Confirmed long-term facts persist across independent SQLite store instances and are deduplicated",
       "status": "passed",
-      "evidence": "FilePromptLoaderTest"
+      "evidence": "SqliteLongTermMemoryStoreTest"
     },
     {
-      "id": "agent-main-chain-follow-up",
-      "description": "A two-turn AgentKernel conversation returns a targeted follow-up instead of repeating generic guidance",
+      "id": "long-term-memory-tool-contract",
+      "description": "Read and write skills expose JSON Tool contracts and execute through ToolRouter",
       "status": "passed",
-      "evidence": "AgentKernelMedicalFollowUpTest"
+      "evidence": "LongTermMemorySkillsTest"
     },
     {
-      "id": "cli-reproduction-path",
-      "description": "The same behavior is reachable through the existing CLI request path",
+      "id": "agent-cross-session-recall",
+      "description": "The Memory Update Agent writes a confirmed fact and AgentKernel recalls it for the same user in a new session",
       "status": "passed",
-      "evidence": "./cli.sh local with the two-turn scenario"
+      "evidence": "AgentKernelLongTermMemoryTest"
+    },
+    {
+      "id": "non-valuable-message-skip",
+      "description": "A direct greeting answer does not write Long-term Memory",
+      "status": "passed",
+      "evidence": "AgentKernelLongTermMemoryTest"
+    },
+    {
+      "id": "cli-cross-session-recall",
+      "description": "The local CLI persisted a confirmed penicillin allergy and recalled it after a new CLI process started",
+      "status": "passed",
+      "evidence": "worklog/T010_LONG_TERM_MEMORY_REGRESSION.md"
     }
   ],
   "command": "./mvnw test",
-  "result": "passed"
+  "result": "passed",
+  "testCount": 47
 }

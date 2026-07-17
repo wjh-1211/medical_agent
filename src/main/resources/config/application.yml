@@ -34,7 +34,8 @@ model:
 memory:
   sessionStore: in_memory
   sessionTtlMinutes: 30
-  longTermStore: mem0
+  longTermStore: sqlite
+  longTermSqlitePath: data/medical-agent.db
   preferenceStore: mysql
 
 guardrail:
@@ -78,3 +79,15 @@ skills:
     implementation: com.medicalagent.skills.MemoryWriteSkill
     options:
       owner: framework
+  longTermMemoryReadSkill:
+    enabled: true
+    toolName: long_term_memory_read
+    implementation: com.medicalagent.skills.LongTermMemoryReadSkill
+    options:
+      owner: memory
+  longTermMemoryWriteSkill:
+    enabled: true
+    toolName: long_term_memory_write
+    implementation: com.medicalagent.skills.LongTermMemoryWriteSkill
+    options:
+      owner: memory

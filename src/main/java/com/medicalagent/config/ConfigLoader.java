@@ -96,6 +96,12 @@ public class ConfigLoader {
                 || config.getSession().getAnonymousUserIdPrefix().isBlank())) {
             throw new ConfigException("session.anonymousUserIdPrefix must not be blank");
         }
+        if (config.getMemory().getLongTermStore() == null || config.getMemory().getLongTermStore().isBlank()) {
+            throw new ConfigException("memory.longTermStore must not be blank");
+        }
+        if (config.getMemory().getLongTermSqlitePath() == null || config.getMemory().getLongTermSqlitePath().isBlank()) {
+            throw new ConfigException("memory.longTermSqlitePath must not be blank");
+        }
         if (config.getTimeout().getModelCallMillis() <= 0) {
             throw new ConfigException("timeout.modelCallMillis must be greater than 0");
         }

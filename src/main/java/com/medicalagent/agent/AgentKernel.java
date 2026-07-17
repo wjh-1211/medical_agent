@@ -16,6 +16,7 @@ import com.medicalagent.prompt.PromptVariablesFactory;
 import com.medicalagent.runtime.ToolRouter;
 import com.medicalagent.skills.MemoryReadSkill;
 import com.medicalagent.skills.MemoryWriteSkill;
+import com.medicalagent.skills.LongTermMemoryReadSkill;
 import com.medicalagent.skills.SkillRegistry;
 import com.medicalagent.skills.ToolSchema;
 
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.logging.Logger;
 
 public record AgentKernel(
@@ -41,7 +43,12 @@ public record AgentKernel(
     public AgentResponse handle(AgentContext context) {
         long requestStartedAt = System.nanoTime();
         JsonNode recalledSessionMemory = recallSessionMemory(context);
-        AgentContext promptContext = augmentContextWithSessionMemory(context, recalledSessionMemory);
+        JsonNode recalledLongTermMemory = recallLongTermMemory(context);
+        AgentContext promptContext = augmentContextWithMemory(
+                context,
+                recalledSessionMemory,
+                recalledLongTermMemory
+        );
         PromptTemplate promptTemplate = promptLoader.load(config.getPrompt().getDefaultTemplate());
         Collection<ToolSchema> availableTools = skillRegistry.registeredToolSchemas();
         List<JsonNode> observations = new ArrayList<>();
@@ -80,6 +87,16 @@ public record AgentKernel(
             throw new IllegalStateException("Agent did not reach final_answer within maxReActLoops=" + maxLoops);
         }
 
+        new LongTermMemoryUpdateAgent(
+                skillRegistry,
+                toolRouter,
+                promptLoader,
+                promptVariablesFactory,
+                promptRenderer,
+                localModelGateway,
+                agentDecisionParser,
+                config.getTimeout().getModelCallMillis()
+        ).update(context, finalAnswer);
         writeSessionMemory(context, finalAnswer);
         logPerformanceSummary(context, requestStartedAt, loopsUsed, totalModelMillis, totalPromptCharacters, totalOutputCharacters);
 
@@ -118,6 +135,15 @@ public record AgentKernel(
         return toolRouter.route(MemoryReadSkill.TOOL_NAME, input);
     }
 
+    private JsonNode recallLongTermMemory(AgentContext context) {
+        if (skillRegistry.findRegistrationByToolName(LongTermMemoryReadSkill.TOOL_NAME).isEmpty()) {
+            return JsonSupport.NODE_FACTORY.objectNode();
+        }
+        ObjectNode input = JsonSupport.NODE_FACTORY.objectNode();
+        input.put("userId", context.getUserId());
+        return toolRouter.route(LongTermMemoryReadSkill.TOOL_NAME, input);
+    }
+
     private void writeSessionMemory(AgentContext context, String finalAnswer) {
         if (skillRegistry.findRegistrationByToolName(MemoryWriteSkill.TOOL_NAME).isEmpty()) {
             return;
@@ -129,13 +155,36 @@ public record AgentKernel(
         toolRouter.route(MemoryWriteSkill.TOOL_NAME, input);
     }
 
-    private AgentContext augmentContextWithSessionMemory(AgentContext original, JsonNode recalledSessionMemory) {
-        if (!recalledSessionMemory.path("found").asBoolean(false)) {
+    private AgentContext augmentContextWithMemory(
+            AgentContext original,
+            JsonNode recalledSessionMemory,
+            JsonNode recalledLongTermMemory
+    ) {
+        boolean foundSessionMemory = recalledSessionMemory.path("found").asBoolean(false);
+        boolean foundLongTermMemory = recalledLongTermMemory.path("found").asBoolean(false);
+        if (!foundSessionMemory && !foundLongTermMemory) {
             return original;
         }
-        String combinedSummary = combineMemorySummaries(original.getMemorySummary(), recalledSessionMemory.path("memorySummary").asText());
+        String combinedSummary = original.getMemorySummary();
+        if (foundSessionMemory) {
+            combinedSummary = combineMemorySummaries(
+                    combinedSummary,
+                    recalledSessionMemory.path("memorySummary").asText()
+            );
+        }
+        if (foundLongTermMemory) {
+            combinedSummary = combineMemorySummaries(
+                    combinedSummary,
+                    summarizeLongTermMemory(recalledLongTermMemory)
+            );
+        }
         ObjectNode mergedToolFacts = original.getToolFacts().deepCopy();
-        mergedToolFacts.set("sessionMemory", recalledSessionMemory);
+        if (foundSessionMemory) {
+            mergedToolFacts.set("sessionMemory", recalledSessionMemory);
+        }
+        if (foundLongTermMemory) {
+            mergedToolFacts.set("longTermMemory", recalledLongTermMemory);
+        }
         return AgentContext.builder()
                 .requestId(original.getRequestId())
                 .sessionId(original.getSessionId())
@@ -149,6 +198,18 @@ public record AgentKernel(
                 .createdAt(original.getCreatedAt())
                 .requestTimeoutMillis(original.getRequestTimeoutMillis())
                 .build();
+    }
+
+    private String summarizeLongTermMemory(JsonNode recalledLongTermMemory) {
+        StringJoiner facts = new StringJoiner("; ");
+        for (JsonNode record : recalledLongTermMemory.path("records")) {
+            String category = record.path("category").asText();
+            String fact = record.path("fact").asText();
+            if (!category.isBlank() && !fact.isBlank()) {
+                facts.add(category + ": " + fact);
+            }
+        }
+        return facts.length() == 0 ? null : "Long-term user facts: " + facts;
     }
 
     private String combineMemorySummaries(String existing, String recalled) {

@@ -24,6 +24,8 @@ class ConfigLoaderTest {
         assertEquals(3, config.getRuntime().getMaxReActLoops());
         assertEquals("qwen3-test", config.getModel().getName());
         assertEquals(1000, config.getTimeout().getToolCallMillis());
+        assertEquals("sqlite", config.getMemory().getLongTermStore());
+        assertEquals("target/test-long-term-memory.db", config.getMemory().getLongTermSqlitePath());
     }
 
     @Test

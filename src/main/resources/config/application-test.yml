@@ -18,3 +18,7 @@ timeout:
   modelCallMillis: 5000
   toolCallMillis: 1000
   memoryCallMillis: 1000
+
+memory:
+  longTermStore: sqlite
+  longTermSqlitePath: target/test-long-term-memory.db

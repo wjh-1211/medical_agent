@@ -4,3 +4,4 @@ prompts/
 .tools/
 .mvn/wrapper/apache-maven-*/
 target/
+data/
