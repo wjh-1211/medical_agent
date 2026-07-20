@@ -6,10 +6,14 @@ import com.medicalagent.api.AgentController;
 import com.medicalagent.config.AppConfig;
 import com.medicalagent.config.ConfigLoader;
 import com.medicalagent.context.AgentContextFactory;
+import com.medicalagent.knowledge.KnowledgeService;
+import com.medicalagent.knowledge.KnowledgeServiceFactory;
 import com.medicalagent.memory.InMemorySessionMemoryStore;
 import com.medicalagent.memory.LongTermMemoryStore;
 import com.medicalagent.memory.LongTermMemoryStoreFactory;
 import com.medicalagent.memory.SessionMemoryStore;
+import com.medicalagent.memory.SummaryMemoryStore;
+import com.medicalagent.memory.SummaryMemoryStoreFactory;
 import com.medicalagent.model.LocalModelGateway;
 import com.medicalagent.model.LocalModelGatewayRegistry;
 import com.medicalagent.model.PythonTransformersLocalModelGatewayFactory;
@@ -23,10 +27,14 @@ import com.medicalagent.skills.MemoryReadSkill;
 import com.medicalagent.skills.MemoryWriteSkill;
 import com.medicalagent.skills.LongTermMemoryReadSkill;
 import com.medicalagent.skills.LongTermMemoryWriteSkill;
+import com.medicalagent.skills.KnowledgeSearchSkill;
+import com.medicalagent.skills.SummaryMemoryReadSkill;
+import com.medicalagent.skills.SummaryMemoryWriteSkill;
 import com.medicalagent.skills.SkillRegistry;
 import com.medicalagent.skills.UppercaseSkill;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
 public class AgentCliApplication {
@@ -36,14 +44,26 @@ public class AgentCliApplication {
         AppConfig appConfig = new ConfigLoader().load(profile);
         SessionMemoryStore sessionMemoryStore = new InMemorySessionMemoryStore(Duration.ofMinutes(appConfig.getMemory().getSessionTtlMinutes()));
         LongTermMemoryStore longTermMemoryStore = new LongTermMemoryStoreFactory().create(appConfig.getMemory());
-        SkillRegistry skillRegistry = new SkillRegistry(appConfig, List.of(
+        SummaryMemoryStore summaryMemoryStore = new SummaryMemoryStoreFactory().create(appConfig.getMemory());
+        List<com.medicalagent.skills.Skill> skills = new ArrayList<>(List.of(
                 new EchoSkill(),
                 new UppercaseSkill(),
                 new MemoryReadSkill(sessionMemoryStore),
                 new MemoryWriteSkill(sessionMemoryStore),
                 new LongTermMemoryReadSkill(longTermMemoryStore),
-                new LongTermMemoryWriteSkill(longTermMemoryStore)
+                new LongTermMemoryWriteSkill(longTermMemoryStore),
+                new SummaryMemoryReadSkill(summaryMemoryStore),
+                new SummaryMemoryWriteSkill(summaryMemoryStore)
         ));
+        KnowledgeService knowledgeService = new KnowledgeServiceFactory()
+                .create(appConfig.getKnowledge())
+                .orElse(null);
+        if (knowledgeService != null) {
+            knowledgeService.rebuildIndex();
+            skills.add(new KnowledgeSearchSkill(knowledgeService, appConfig.getKnowledge().getDefaultTopK()));
+            Runtime.getRuntime().addShutdownHook(new Thread(knowledgeService::close, "cli-knowledge-embedding-shutdown"));
+        }
+        SkillRegistry skillRegistry = new SkillRegistry(appConfig, skills);
         ToolRouter toolRouter = new ToolRouter(skillRegistry);
         LocalModelGateway localModelGateway = new LocalModelGatewayRegistry(List.of(
                 new StubLocalModelGatewayFactory(),
@@ -61,7 +81,7 @@ public class AgentCliApplication {
                 skillRegistry,
                 toolRouter,
                 new FilePromptLoader(appConfig.getPrompt()),
-                new PromptVariablesFactory(),
+                new PromptVariablesFactory(appConfig.getContext()),
                 new PromptRenderer(appConfig.getPrompt()),
                 localModelGateway,
                 new AgentDecisionParser()

@@ -1,40 +1,46 @@
 {
-  "taskId": "T010",
-  "scenario": "用户确认长期医疗事实后的跨会话 SQLite 召回",
-  "date": "2026-07-17",
+  "taskId": "T012",
+  "scenario": "LangChain4j 向量 RAG、KnowledgeSearchSkill 与来源引用",
+  "date": "2026-07-18",
   "checks": [
     {
-      "id": "sqlite-long-term-memory-persistence",
-      "description": "Confirmed long-term facts persist across independent SQLite store instances and are deduplicated",
+      "id": "langchain4j-vector-index",
+      "description": "Controlled documents are split through LangChain4j and indexed as independent vectors with source metadata",
       "status": "passed",
-      "evidence": "SqliteLongTermMemoryStoreTest"
+      "evidence": "KnowledgeServiceTest"
     },
     {
-      "id": "long-term-memory-tool-contract",
-      "description": "Read and write skills expose JSON Tool contracts and execute through ToolRouter",
+      "id": "knowledge-search-tool-contract",
+      "description": "knowledge_search exposes a JSON Tool contract and returns source-bearing evidence through ToolRouter",
       "status": "passed",
-      "evidence": "LongTermMemorySkillsTest"
+      "evidence": "KnowledgeSearchSkillTest"
     },
     {
-      "id": "agent-cross-session-recall",
-      "description": "The Memory Update Agent writes a confirmed fact and AgentKernel recalls it for the same user in a new session",
+      "id": "agent-knowledge-observation",
+      "description": "An LLM retrieval decision calls knowledge_search and its result is injected into the next ReAct observation",
       "status": "passed",
-      "evidence": "AgentKernelLongTermMemoryTest"
+      "evidence": "AgentKernelKnowledgeSearchTest"
     },
     {
-      "id": "non-valuable-message-skip",
-      "description": "A direct greeting answer does not write Long-term Memory",
+      "id": "knowledge-source-serialization",
+      "description": "Answers with a real knowledge observation receive only the returned source and chunk identifier",
       "status": "passed",
-      "evidence": "AgentKernelLongTermMemoryTest"
+      "evidence": "AgentKernelKnowledgeSearchTest"
     },
     {
-      "id": "cli-cross-session-recall",
-      "description": "The local CLI persisted a confirmed penicillin allergy and recalled it after a new CLI process started",
+      "id": "knowledge-prompt-contracts",
+      "description": "Main ReAct and retrieval-decision prompts require Tool selection and reject invented citations",
       "status": "passed",
-      "evidence": "worklog/T010_LONG_TERM_MEMORY_REGRESSION.md"
+      "evidence": "FilePromptLoaderTest"
+    },
+    {
+      "id": "cli-local-rag",
+      "description": "The local CLI embedded controlled documents with Qwen3-Embedding-4B and returned breathing-difficulty evidence with a real source marker",
+      "status": "passed",
+      "evidence": "worklog/T012_RAG_REGRESSION.md"
     }
   ],
   "command": "./mvnw test",
   "result": "passed",
-  "testCount": 47
+  "testCount": 60
 }

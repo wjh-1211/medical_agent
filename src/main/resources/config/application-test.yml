@@ -22,3 +22,16 @@ timeout:
 memory:
   longTermStore: sqlite
   longTermSqlitePath: target/test-long-term-memory.db
+  summaryStore: sqlite
+  summarySqlitePath: target/test-summary-memory.db
+
+knowledge:
+  enabled: true
+  documentsDirectory: src/test/resources/knowledge
+  indexSqlitePath: target/test-knowledge-index.db
+  embeddingProvider: hash
+  embeddingDimension: 64
+  chunkMaxCharacters: 180
+  chunkOverlapCharacters: 20
+  defaultTopK: 2
+  minScore: -1.0

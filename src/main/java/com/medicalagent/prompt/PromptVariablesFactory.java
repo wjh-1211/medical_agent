@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.medicalagent.api.AgentMessage;
 import com.medicalagent.common.JsonSupport;
+import com.medicalagent.config.ContextConfig;
 import com.medicalagent.context.AgentContext;
 import com.medicalagent.skills.ToolSchema;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -17,10 +19,15 @@ import java.util.stream.Collectors;
 
 public class PromptVariablesFactory {
 
-    private static final int MAX_HISTORY_MESSAGES = 4;
-    private static final int MAX_OBSERVATIONS = 2;
-    private static final int MAX_MESSAGE_LENGTH = 180;
-    private static final int MAX_JSON_LENGTH = 1200;
+    private final ContextConfig contextConfig;
+
+    public PromptVariablesFactory() {
+        this(new ContextConfig());
+    }
+
+    public PromptVariablesFactory(ContextConfig contextConfig) {
+        this.contextConfig = contextConfig;
+    }
 
     public Map<String, String> create(AgentContext context) {
         return create(context, List.of(), List.of());
@@ -33,8 +40,11 @@ public class PromptVariablesFactory {
         variables.put("userId", context.getUserId());
         variables.put("message", context.getMessage());
         variables.put("history", formatHistory(context.getHistory()));
+        variables.put("longTermMemory", formatMemoryFact(context.getToolFacts().path("longTermMemory"), contextConfig.getLongTermMemoryMaxCharacters()));
+        variables.put("sessionMemory", formatMemoryFact(context.getToolFacts().path("sessionMemory"), contextConfig.getSessionMemoryMaxCharacters()));
+        variables.put("summaryMemory", formatMemoryFact(context.getToolFacts().path("summaryMemory"), contextConfig.getSummaryMemoryMaxCharacters()));
         variables.put("memorySummary", defaultText(context.getMemorySummary(), "N/A"));
-        variables.put("toolFacts", formatJson(context.getToolFacts()));
+        variables.put("toolFacts", formatNonMemoryToolFacts(context.getToolFacts()));
         variables.put("emergencyFlag", context.getEmergencyFlag() == null ? "unknown" : context.getEmergencyFlag().toString());
         variables.put("metadata", formatMetadata(context.getMetadata()));
         variables.put("createdAt", context.getCreatedAt().toString());
@@ -48,16 +58,34 @@ public class PromptVariablesFactory {
             return "No prior history.";
         }
         List<AgentMessage> recentMessages = history.stream()
-                .skip(Math.max(0, history.size() - MAX_HISTORY_MESSAGES))
+                .skip(Math.max(0, history.size() - contextConfig.getRecentHistoryMaxMessages()))
                 .toList();
-        return recentMessages.stream()
-                .map(message -> message.role() + ": " + compactText(message.content(), MAX_MESSAGE_LENGTH))
+        String formatted = recentMessages.stream()
+                .map(message -> message.role() + ": " + compactText(message.content(), contextConfig.getRecentHistoryMaxCharacters()))
                 .collect(Collectors.joining(System.lineSeparator()));
+        return compactText(formatted, contextConfig.getRecentHistoryMaxCharacters());
     }
 
-    private String formatJson(com.fasterxml.jackson.databind.JsonNode jsonNode) {
+    private String formatMemoryFact(JsonNode memory, int maxCharacters) {
+        if (memory == null || memory.isMissingNode() || memory.isNull() || memory.isEmpty()) {
+            return "N/A";
+        }
+        return formatJson(memory, maxCharacters);
+    }
+
+    private String formatNonMemoryToolFacts(JsonNode toolFacts) {
+        ObjectNode nonMemoryFacts = toolFacts != null && toolFacts.isObject()
+                ? ((ObjectNode) toolFacts).deepCopy()
+                : JsonSupport.NODE_FACTORY.objectNode();
+        nonMemoryFacts.remove("longTermMemory");
+        nonMemoryFacts.remove("sessionMemory");
+        nonMemoryFacts.remove("summaryMemory");
+        return formatJson(nonMemoryFacts, contextConfig.getToolFactsMaxCharacters());
+    }
+
+    private String formatJson(JsonNode jsonNode, int maxCharacters) {
         try {
-            return compactText(JsonSupport.JSON_MAPPER.writeValueAsString(jsonNode), MAX_JSON_LENGTH);
+            return compactText(JsonSupport.JSON_MAPPER.writeValueAsString(jsonNode), maxCharacters);
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Failed to serialize toolFacts to prompt variables", exception);
         }
@@ -87,11 +115,12 @@ public class PromptVariablesFactory {
             return "No observations yet.";
         }
         List<JsonNode> recentObservations = observations.stream()
-                .skip(Math.max(0, observations.size() - MAX_OBSERVATIONS))
+                .skip(Math.max(0, observations.size() - contextConfig.getObservationsMaxMessages()))
                 .toList();
-        return recentObservations.stream()
-                .map(this::formatJson)
+        String formatted = recentObservations.stream()
+                .map(observation -> formatJson(observation, contextConfig.getObservationsMaxCharacters()))
                 .collect(Collectors.joining(System.lineSeparator() + System.lineSeparator()));
+        return compactText(formatted, contextConfig.getObservationsMaxCharacters());
     }
 
     private String defaultText(String value, String fallback) {

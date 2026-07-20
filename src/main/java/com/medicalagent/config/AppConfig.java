@@ -11,6 +11,8 @@ public class AppConfig {
     private PromptConfig prompt = new PromptConfig();
     private ModelConfig model = new ModelConfig();
     private MemoryConfig memory = new MemoryConfig();
+    private KnowledgeConfig knowledge = new KnowledgeConfig();
+    private ContextConfig context = new ContextConfig();
     private GuardrailConfig guardrail = new GuardrailConfig();
     private TimeoutConfig timeout = new TimeoutConfig();
     private CacheConfig cache = new CacheConfig();
@@ -62,6 +64,22 @@ public class AppConfig {
 
     public void setMemory(MemoryConfig memory) {
         this.memory = memory;
+    }
+
+    public KnowledgeConfig getKnowledge() {
+        return knowledge;
+    }
+
+    public void setKnowledge(KnowledgeConfig knowledge) {
+        this.knowledge = knowledge;
+    }
+
+    public ContextConfig getContext() {
+        return context;
+    }
+
+    public void setContext(ContextConfig context) {
+        this.context = context;
     }
 
     public GuardrailConfig getGuardrail() {

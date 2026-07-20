@@ -28,6 +28,11 @@ class FilePromptLoaderTest {
         assertTrue(template.content().contains("long_term_memory_write"));
         assertTrue(template.content().contains("长期记忆最终优先级"));
         assertTrue(template.content().contains("长期记忆召回最终优先级"));
+        assertTrue(template.content().contains("Summary 查询最终优先级"));
+        assertTrue(template.content().contains("Knowledge Retrieval Policy"));
+        assertTrue(template.content().contains("knowledge_search"));
+        assertTrue(template.content().contains("Never invent a guideline"));
+        assertTrue(template.content().contains("最高优先级检索规则"));
         assertTrue(template.path().toString().endsWith("prompts/medical-agent-react.prompt.md"));
     }
 
@@ -39,5 +44,39 @@ class FilePromptLoaderTest {
         assertTrue(template.content().contains("{{agentAnswer}}"));
         assertTrue(template.content().contains("long_term_memory_write"));
         assertTrue(template.content().contains("user_confirmed"));
+    }
+
+    @Test
+    void shouldLoadSummaryMemoryUpdatePrompt() {
+        AppConfig config = new ConfigLoader().load("test");
+        PromptTemplate template = new FilePromptLoader(config.getPrompt()).load("summary-memory-update");
+
+        assertTrue(template.content().contains("{{summaryMemory}}"));
+        assertTrue(template.content().contains("summary_memory_write"));
+        assertTrue(template.content().contains("future-useful session context"));
+        assertTrue(template.content().contains("full transcript"));
+        assertTrue(template.content().contains("repeated wording"));
+        assertTrue(template.content().contains("最终优先级"));
+    }
+
+    @Test
+    void shouldLoadSummaryContextAnswerPrompt() {
+        AppConfig config = new ConfigLoader().load("test");
+        PromptTemplate template = new FilePromptLoader(config.getPrompt()).load("summary-context-answer");
+
+        assertTrue(template.content().contains("{{summaryMemory}}"));
+        assertTrue(template.content().contains("summary_context_continue"));
+        assertTrue(template.content().contains("最高体温38.5度"));
+    }
+
+    @Test
+    void shouldLoadKnowledgeRetrievalDecisionPrompt() {
+        AppConfig config = new ConfigLoader().load("test");
+        PromptTemplate template = new FilePromptLoader(config.getPrompt()).load("knowledge-retrieval-decision");
+
+        assertTrue(template.content().contains("{{message}}"));
+        assertTrue(template.content().contains("knowledge_search"));
+        assertTrue(template.content().contains("knowledge_retrieval_continue"));
+        assertTrue(template.content().contains("受控知识库中，出现呼吸困难时有什么提示"));
     }
 }

@@ -102,8 +102,52 @@ public class ConfigLoader {
         if (config.getMemory().getLongTermSqlitePath() == null || config.getMemory().getLongTermSqlitePath().isBlank()) {
             throw new ConfigException("memory.longTermSqlitePath must not be blank");
         }
+        if (config.getMemory().getSummaryStore() == null || config.getMemory().getSummaryStore().isBlank()) {
+            throw new ConfigException("memory.summaryStore must not be blank");
+        }
+        if (config.getMemory().getSummarySqlitePath() == null || config.getMemory().getSummarySqlitePath().isBlank()) {
+            throw new ConfigException("memory.summarySqlitePath must not be blank");
+        }
+        if (config.getKnowledge().isEnabled()) {
+            validateNotBlank(config.getKnowledge().getDocumentsDirectory(), "knowledge.documentsDirectory");
+            validateNotBlank(config.getKnowledge().getIndexSqlitePath(), "knowledge.indexSqlitePath");
+            validateNotBlank(config.getKnowledge().getEmbeddingProvider(), "knowledge.embeddingProvider");
+            validatePositive(config.getKnowledge().getEmbeddingDimension(), "knowledge.embeddingDimension");
+            validatePositive(config.getKnowledge().getChunkMaxCharacters(), "knowledge.chunkMaxCharacters");
+            validatePositive(config.getKnowledge().getChunkOverlapCharacters(), "knowledge.chunkOverlapCharacters");
+            validatePositive(config.getKnowledge().getDefaultTopK(), "knowledge.defaultTopK");
+            if (config.getKnowledge().getMinScore() < -1d || config.getKnowledge().getMinScore() > 1d) {
+                throw new ConfigException("knowledge.minScore must be between -1 and 1");
+            }
+            if ("python_transformers".equals(config.getKnowledge().getEmbeddingProvider())) {
+                validateNotBlank(config.getKnowledge().getEmbeddingModelPath(), "knowledge.embeddingModelPath");
+                validateNotBlank(config.getKnowledge().getEmbeddingPythonExecutable(), "knowledge.embeddingPythonExecutable");
+                validateNotBlank(config.getKnowledge().getEmbeddingLauncherScript(), "knowledge.embeddingLauncherScript");
+            }
+        }
+        validatePositive(config.getContext().getSummaryUpdateMinHistoryMessages(), "context.summaryUpdateMinHistoryMessages");
+        validatePositive(config.getContext().getLongTermMemoryMaxCharacters(), "context.longTermMemoryMaxCharacters");
+        validatePositive(config.getContext().getSessionMemoryMaxCharacters(), "context.sessionMemoryMaxCharacters");
+        validatePositive(config.getContext().getSummaryMemoryMaxCharacters(), "context.summaryMemoryMaxCharacters");
+        validatePositive(config.getContext().getRecentHistoryMaxMessages(), "context.recentHistoryMaxMessages");
+        validatePositive(config.getContext().getRecentHistoryMaxCharacters(), "context.recentHistoryMaxCharacters");
+        validatePositive(config.getContext().getToolFactsMaxCharacters(), "context.toolFactsMaxCharacters");
+        validatePositive(config.getContext().getObservationsMaxMessages(), "context.observationsMaxMessages");
+        validatePositive(config.getContext().getObservationsMaxCharacters(), "context.observationsMaxCharacters");
         if (config.getTimeout().getModelCallMillis() <= 0) {
             throw new ConfigException("timeout.modelCallMillis must be greater than 0");
+        }
+    }
+
+    private void validatePositive(int value, String property) {
+        if (value <= 0) {
+            throw new ConfigException(property + " must be greater than 0");
+        }
+    }
+
+    private void validateNotBlank(String value, String property) {
+        if (value == null || value.isBlank()) {
+            throw new ConfigException(property + " must not be blank");
         }
     }
 }

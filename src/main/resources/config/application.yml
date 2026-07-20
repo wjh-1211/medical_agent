@@ -36,7 +36,36 @@ memory:
   sessionTtlMinutes: 30
   longTermStore: sqlite
   longTermSqlitePath: data/medical-agent.db
+  summaryStore: sqlite
+  summarySqlitePath: data/medical-agent.db
   preferenceStore: mysql
+
+knowledge:
+  enabled: true
+  documentsDirectory: knowledge
+  indexSqlitePath: data/knowledge-index.db
+  embeddingProvider: python_transformers
+  embeddingModelPath: /mnt/Data/multi-agent/Qwen/Qwen3-Embedding-4B
+  embeddingPythonExecutable: python3
+  embeddingLauncherScript: scripts/local_embedding_inference.py
+  embeddingDimension: 1024
+  chunkMaxCharacters: 700
+  chunkOverlapCharacters: 100
+  defaultTopK: 3
+  minScore: 0.35
+  queryInstruction: Given a medical knowledge question, retrieve relevant passages that answer the question
+
+context:
+  summaryEnabled: true
+  summaryUpdateMinHistoryMessages: 4
+  longTermMemoryMaxCharacters: 1200
+  sessionMemoryMaxCharacters: 800
+  summaryMemoryMaxCharacters: 1200
+  recentHistoryMaxMessages: 4
+  recentHistoryMaxCharacters: 1800
+  toolFactsMaxCharacters: 1000
+  observationsMaxMessages: 2
+  observationsMaxCharacters: 1000
 
 guardrail:
   emergencyDetectionEnabled: true
@@ -91,3 +120,21 @@ skills:
     implementation: com.medicalagent.skills.LongTermMemoryWriteSkill
     options:
       owner: memory
+  summaryMemoryReadSkill:
+    enabled: true
+    toolName: summary_memory_read
+    implementation: com.medicalagent.skills.SummaryMemoryReadSkill
+    options:
+      owner: memory
+  summaryMemoryWriteSkill:
+    enabled: true
+    toolName: summary_memory_write
+    implementation: com.medicalagent.skills.SummaryMemoryWriteSkill
+    options:
+      owner: memory
+  knowledgeSearchSkill:
+    enabled: true
+    toolName: knowledge_search
+    implementation: com.medicalagent.skills.KnowledgeSearchSkill
+    options:
+      owner: knowledge

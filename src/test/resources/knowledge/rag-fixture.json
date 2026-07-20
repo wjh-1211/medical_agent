@@ -1,0 +1,14 @@
+{
+  "source": "RAG Test Fixture",
+  "documentVersion": "test-v1",
+  "sections": [
+    {
+      "title": "呼吸困难",
+      "content": "出现呼吸困难或嘴唇发青时，需要尽快寻求紧急医疗帮助。"
+    },
+    {
+      "title": "资料不足",
+      "content": "受控资料不足时，不得虚构指南或引用。"
+    }
+  ]
+}

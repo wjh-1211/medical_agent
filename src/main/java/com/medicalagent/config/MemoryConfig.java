@@ -6,6 +6,8 @@ public class MemoryConfig {
     private int sessionTtlMinutes = 30;
     private String longTermStore = "sqlite";
     private String longTermSqlitePath = "data/medical-agent.db";
+    private String summaryStore = "sqlite";
+    private String summarySqlitePath = "data/medical-agent.db";
     private String preferenceStore = "mysql";
 
     public String getSessionStore() {
@@ -38,6 +40,22 @@ public class MemoryConfig {
 
     public void setLongTermSqlitePath(String longTermSqlitePath) {
         this.longTermSqlitePath = longTermSqlitePath;
+    }
+
+    public String getSummaryStore() {
+        return summaryStore;
+    }
+
+    public void setSummaryStore(String summaryStore) {
+        this.summaryStore = summaryStore;
+    }
+
+    public String getSummarySqlitePath() {
+        return summarySqlitePath;
+    }
+
+    public void setSummarySqlitePath(String summarySqlitePath) {
+        this.summarySqlitePath = summarySqlitePath;
     }
 
     public String getPreferenceStore() {

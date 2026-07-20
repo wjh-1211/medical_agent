@@ -94,7 +94,7 @@ class AgentKernelLongTermMemoryTest {
 
         assertEquals("Your confirmed allergy is available.", response.answer());
         assertTrue(recallingGateway.prompts.get(0).contains("Long-term user facts: allergy: Allergic to penicillin"));
-        assertTrue(recallingGateway.prompts.get(0).contains("\"longTermMemory\""));
+        assertTrue(recallingGateway.prompts.get(0).contains("Long-term Memory:"));
     }
 
     @Test

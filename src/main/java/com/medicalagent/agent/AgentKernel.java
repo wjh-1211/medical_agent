@@ -17,6 +17,8 @@ import com.medicalagent.runtime.ToolRouter;
 import com.medicalagent.skills.MemoryReadSkill;
 import com.medicalagent.skills.MemoryWriteSkill;
 import com.medicalagent.skills.LongTermMemoryReadSkill;
+import com.medicalagent.skills.KnowledgeSearchSkill;
+import com.medicalagent.skills.SummaryMemoryReadSkill;
 import com.medicalagent.skills.SkillRegistry;
 import com.medicalagent.skills.ToolSchema;
 
@@ -44,22 +46,44 @@ public record AgentKernel(
         long requestStartedAt = System.nanoTime();
         JsonNode recalledSessionMemory = recallSessionMemory(context);
         JsonNode recalledLongTermMemory = recallLongTermMemory(context);
+        JsonNode recalledSummaryMemory = recallSummaryMemory(context);
         AgentContext promptContext = augmentContextWithMemory(
                 context,
                 recalledSessionMemory,
-                recalledLongTermMemory
+                recalledLongTermMemory,
+                recalledSummaryMemory
         );
         PromptTemplate promptTemplate = promptLoader.load(config.getPrompt().getDefaultTemplate());
         Collection<ToolSchema> availableTools = skillRegistry.registeredToolSchemas();
         List<JsonNode> observations = new ArrayList<>();
         int maxLoops = Math.max(1, config.getRuntime().getMaxReActLoops());
-        String finalAnswer = null;
+        String finalAnswer = new SummaryContextAnswerAgent(
+                promptLoader,
+                promptVariablesFactory,
+                promptRenderer,
+                localModelGateway,
+                agentDecisionParser,
+                config.getTimeout().getModelCallMillis()
+        ).answerIfSupported(promptContext).orElse(null);
         long totalModelMillis = 0L;
         int totalPromptCharacters = 0;
         int totalOutputCharacters = 0;
         int loopsUsed = 0;
 
-        for (int loop = 0; loop < maxLoops; loop++) {
+        if (finalAnswer == null) {
+            skillRegistry.findSchemaByToolName(KnowledgeSearchSkill.TOOL_NAME)
+                    .flatMap(schema -> new KnowledgeRetrievalDecisionAgent(
+                            promptLoader,
+                            promptVariablesFactory,
+                            promptRenderer,
+                            localModelGateway,
+                            agentDecisionParser,
+                            config.getTimeout().getModelCallMillis()
+                    ).decide(promptContext, schema))
+                    .ifPresent(decision -> observations.add(executeToolAndCreateObservation(decision)));
+        }
+
+        for (int loop = 0; finalAnswer == null && loop < maxLoops; loop++) {
             Map<String, String> promptVariables = promptVariablesFactory.create(promptContext, availableTools, observations);
             String renderedPrompt = promptRenderer.render(promptTemplate, promptVariables);
             LocalModelResponse modelResponse = localModelGateway.generate(new LocalModelRequest(
@@ -86,6 +110,7 @@ public record AgentKernel(
         if (finalAnswer == null) {
             throw new IllegalStateException("Agent did not reach final_answer within maxReActLoops=" + maxLoops);
         }
+        finalAnswer = appendKnowledgeSourceMarker(finalAnswer, observations);
 
         new LongTermMemoryUpdateAgent(
                 skillRegistry,
@@ -95,6 +120,17 @@ public record AgentKernel(
                 promptRenderer,
                 localModelGateway,
                 agentDecisionParser,
+                config.getTimeout().getModelCallMillis()
+        ).update(context, finalAnswer);
+        new SummaryMemoryUpdateAgent(
+                skillRegistry,
+                toolRouter,
+                promptLoader,
+                promptVariablesFactory,
+                promptRenderer,
+                localModelGateway,
+                agentDecisionParser,
+                config.getContext(),
                 config.getTimeout().getModelCallMillis()
         ).update(context, finalAnswer);
         writeSessionMemory(context, finalAnswer);
@@ -126,6 +162,24 @@ public record AgentKernel(
         return observation;
     }
 
+    private String appendKnowledgeSourceMarker(String answer, List<JsonNode> observations) {
+        if (answer.contains("[source:")) {
+            return answer;
+        }
+        for (JsonNode observation : observations) {
+            if (!KnowledgeSearchSkill.TOOL_NAME.equals(observation.path("toolName").asText())) {
+                continue;
+            }
+            JsonNode firstChunk = observation.path("result").path("chunks").path(0);
+            String source = firstChunk.path("source").asText();
+            String chunkId = firstChunk.path("chunkId").asText();
+            if (!source.isBlank() && !chunkId.isBlank()) {
+                return answer + " [source: " + source + " | chunk: " + chunkId + "]";
+            }
+        }
+        return answer;
+    }
+
     private JsonNode recallSessionMemory(AgentContext context) {
         if (skillRegistry.findRegistrationByToolName(MemoryReadSkill.TOOL_NAME).isEmpty()) {
             return JsonSupport.NODE_FACTORY.objectNode();
@@ -144,6 +198,15 @@ public record AgentKernel(
         return toolRouter.route(LongTermMemoryReadSkill.TOOL_NAME, input);
     }
 
+    private JsonNode recallSummaryMemory(AgentContext context) {
+        if (skillRegistry.findRegistrationByToolName(SummaryMemoryReadSkill.TOOL_NAME).isEmpty()) {
+            return JsonSupport.NODE_FACTORY.objectNode();
+        }
+        ObjectNode input = JsonSupport.NODE_FACTORY.objectNode();
+        input.put("sessionId", context.getSessionId());
+        return toolRouter.route(SummaryMemoryReadSkill.TOOL_NAME, input);
+    }
+
     private void writeSessionMemory(AgentContext context, String finalAnswer) {
         if (skillRegistry.findRegistrationByToolName(MemoryWriteSkill.TOOL_NAME).isEmpty()) {
             return;
@@ -158,11 +221,13 @@ public record AgentKernel(
     private AgentContext augmentContextWithMemory(
             AgentContext original,
             JsonNode recalledSessionMemory,
-            JsonNode recalledLongTermMemory
+            JsonNode recalledLongTermMemory,
+            JsonNode recalledSummaryMemory
     ) {
         boolean foundSessionMemory = recalledSessionMemory.path("found").asBoolean(false);
         boolean foundLongTermMemory = recalledLongTermMemory.path("found").asBoolean(false);
-        if (!foundSessionMemory && !foundLongTermMemory) {
+        boolean foundSummaryMemory = recalledSummaryMemory.path("found").asBoolean(false);
+        if (!foundSessionMemory && !foundLongTermMemory && !foundSummaryMemory) {
             return original;
         }
         String combinedSummary = original.getMemorySummary();
@@ -178,12 +243,21 @@ public record AgentKernel(
                     summarizeLongTermMemory(recalledLongTermMemory)
             );
         }
+        if (foundSummaryMemory) {
+            combinedSummary = combineMemorySummaries(
+                    combinedSummary,
+                    recalledSummaryMemory.path("summary").asText()
+            );
+        }
         ObjectNode mergedToolFacts = original.getToolFacts().deepCopy();
         if (foundSessionMemory) {
             mergedToolFacts.set("sessionMemory", recalledSessionMemory);
         }
         if (foundLongTermMemory) {
             mergedToolFacts.set("longTermMemory", recalledLongTermMemory);
+        }
+        if (foundSummaryMemory) {
+            mergedToolFacts.set("summaryMemory", recalledSummaryMemory);
         }
         return AgentContext.builder()
                 .requestId(original.getRequestId())

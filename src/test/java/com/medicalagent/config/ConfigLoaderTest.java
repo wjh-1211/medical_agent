@@ -26,6 +26,12 @@ class ConfigLoaderTest {
         assertEquals(1000, config.getTimeout().getToolCallMillis());
         assertEquals("sqlite", config.getMemory().getLongTermStore());
         assertEquals("target/test-long-term-memory.db", config.getMemory().getLongTermSqlitePath());
+        assertEquals("sqlite", config.getMemory().getSummaryStore());
+        assertEquals("target/test-summary-memory.db", config.getMemory().getSummarySqlitePath());
+        assertEquals(4, config.getContext().getSummaryUpdateMinHistoryMessages());
+        assertEquals("hash", config.getKnowledge().getEmbeddingProvider());
+        assertEquals(64, config.getKnowledge().getEmbeddingDimension());
+        assertEquals("src/test/resources/knowledge", config.getKnowledge().getDocumentsDirectory());
     }
 
     @Test
