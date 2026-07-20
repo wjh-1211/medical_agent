@@ -46,14 +46,23 @@ public class KnowledgeService implements KnowledgeRetriever {
 
     @Override
     public List<KnowledgeChunkMatch> search(String query, int topK) {
+        return searchWithTrace(query, topK).matches();
+    }
+
+    public KnowledgeSearchTrace searchWithTrace(String query, int topK) {
         if (query == null || query.isBlank()) {
             throw new IllegalArgumentException("Knowledge search query must not be blank");
         }
         if (topK <= 0) {
             throw new IllegalArgumentException("Knowledge search topK must be greater than 0");
         }
+        long embeddingStartedAt = System.nanoTime();
         Embedding queryEmbedding = embeddingModel.embedQuery(query).content();
-        return vectorStore.search(queryEmbedding, topK, config.getMinScore());
+        long embeddingMillis = (System.nanoTime() - embeddingStartedAt) / 1_000_000L;
+        long retrievalStartedAt = System.nanoTime();
+        List<KnowledgeChunkMatch> matches = vectorStore.search(queryEmbedding, topK, config.getMinScore());
+        long retrievalMillis = (System.nanoTime() - retrievalStartedAt) / 1_000_000L;
+        return new KnowledgeSearchTrace(matches, embeddingMillis, retrievalMillis);
     }
 
     public int indexedChunkCount() {

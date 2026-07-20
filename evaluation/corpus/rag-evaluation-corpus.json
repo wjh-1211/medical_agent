@@ -1,0 +1,30 @@
+{
+  "source": "RAG Evaluation Fixture",
+  "documentVersion": "eval-v1",
+  "sections": [
+    {
+      "title": "呼吸困难红旗",
+      "content": "呼吸困难、说话困难、嘴唇发青或意识模糊时，应尽快寻求紧急医疗帮助。"
+    },
+    {
+      "title": "发热线下评估",
+      "content": "发热伴症状持续加重、明显胸痛、持续高热或基础疾病时，应尽快线下评估。"
+    },
+    {
+      "title": "资料不足边界",
+      "content": "受控资料没有证据时，回答必须说明资料不足，不能虚构指南、文献或来源。"
+    },
+    {
+      "title": "Memory 知识隔离",
+      "content": "用户过敏史、病史和长期用药属于用户 Memory，不应作为外部知识证据引用。"
+    },
+    {
+      "title": "详细用药信息",
+      "content": "请求具体用药、剂量或组合前，需要补充年龄、体温、症状时长、基础病、过敏史和正在使用的药物。"
+    },
+    {
+      "title": "来源引用契约",
+      "content": "回答中的 source 和 chunkId 必须来自本轮 knowledge_search Observation，不能引用不存在的文档。"
+    }
+  ]
+}

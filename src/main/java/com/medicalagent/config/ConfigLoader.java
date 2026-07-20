@@ -125,6 +125,13 @@ public class ConfigLoader {
                 validateNotBlank(config.getKnowledge().getEmbeddingLauncherScript(), "knowledge.embeddingLauncherScript");
             }
         }
+        validateNotBlank(config.getEvaluation().getCaseSetPath(), "evaluation.caseSetPath");
+        validateNotBlank(config.getEvaluation().getReportPath(), "evaluation.reportPath");
+        validateNotBlank(config.getEvaluation().getMarkdownSummaryPath(), "evaluation.markdownSummaryPath");
+        validateNotBlank(config.getEvaluation().getBaselinePath(), "evaluation.baselinePath");
+        validateNotBlank(config.getEvaluation().getEvaluatorVersion(), "evaluation.evaluatorVersion");
+        validatePositive(config.getEvaluation().getTopK(), "evaluation.topK");
+        validatePositive(config.getEvaluation().getLocalSampleLimit(), "evaluation.localSampleLimit");
         validatePositive(config.getContext().getSummaryUpdateMinHistoryMessages(), "context.summaryUpdateMinHistoryMessages");
         validatePositive(config.getContext().getLongTermMemoryMaxCharacters(), "context.longTermMemoryMaxCharacters");
         validatePositive(config.getContext().getSessionMemoryMaxCharacters(), "context.sessionMemoryMaxCharacters");

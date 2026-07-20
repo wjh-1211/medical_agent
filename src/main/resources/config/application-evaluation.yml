@@ -1,0 +1,32 @@
+runtime:
+  environment: evaluation
+
+api:
+  enabled: false
+
+model:
+  provider: stub
+  name: evaluation-replay-model
+  path: /tmp/evaluation-replay-model
+  temperature: 0.0
+  maxTokens: 256
+
+knowledge:
+  enabled: true
+  documentsDirectory: evaluation/corpus
+  indexSqlitePath: target/evaluation-knowledge-index.db
+  embeddingProvider: hash
+  embeddingDimension: 256
+  chunkMaxCharacters: 300
+  chunkOverlapCharacters: 20
+  defaultTopK: 3
+  minScore: 0.10
+
+evaluation:
+  caseSetPath: evaluation/rag-evaluation-cases.json
+  reportPath: evaluation-report.json
+  markdownSummaryPath: worklog/T013_RAG_EVALUATION_SUMMARY.md
+  baselinePath: evaluation/baselines/vector-rag-v1.json
+  topK: 3
+  localSampleLimit: 3
+  evaluatorVersion: t013-v1

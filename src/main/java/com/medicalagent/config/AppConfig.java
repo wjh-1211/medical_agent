@@ -12,6 +12,7 @@ public class AppConfig {
     private ModelConfig model = new ModelConfig();
     private MemoryConfig memory = new MemoryConfig();
     private KnowledgeConfig knowledge = new KnowledgeConfig();
+    private EvaluationConfig evaluation = new EvaluationConfig();
     private ContextConfig context = new ContextConfig();
     private GuardrailConfig guardrail = new GuardrailConfig();
     private TimeoutConfig timeout = new TimeoutConfig();
@@ -72,6 +73,14 @@ public class AppConfig {
 
     public void setKnowledge(KnowledgeConfig knowledge) {
         this.knowledge = knowledge;
+    }
+
+    public EvaluationConfig getEvaluation() {
+        return evaluation;
+    }
+
+    public void setEvaluation(EvaluationConfig evaluation) {
+        this.evaluation = evaluation;
     }
 
     public ContextConfig getContext() {

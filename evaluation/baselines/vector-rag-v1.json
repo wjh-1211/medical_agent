@@ -6,81 +6,38 @@
   "candidateId" : "vector-rag-hash",
   "mode" : "offline-replay",
   "deterministic" : true,
-  "generatedAt" : "2026-07-20T08:57:30.777635006Z",
+  "generatedAt" : "2026-07-20T07:41:20.648204302Z",
   "caseCount" : 30,
   "metrics" : {
     "values" : {
-      "citation.coverage" : 1.0,
-      "retrieval.recall_at_3" : 1.0,
-      "retrieval.no_result_precision" : 0.0,
-      "latency.total_p50_ms" : 2.0,
-      "retrieval.ndcg_at_3" : 0.9538662191964322,
-      "answer.rubric_coverage" : 0.875,
-      "citation.validity" : 1.0,
-      "citation.unsupported_rate" : 0.0,
-      "tool_selection.precision" : 1.0,
-      "tool_selection.recall" : 1.0,
-      "retrieval.mrr" : 0.9375,
       "latency.embedding_p50_ms" : 0.0,
-      "latency.total_p95_ms" : 7.0,
-      "answer.no_evidence_hallucination_rate" : 1.0,
-      "latency.retrieval_p50_ms" : 2.0,
+      "retrieval.mrr" : 0.9375,
+      "tool_selection.recall" : 1.0,
+      "tool_selection.precision" : 1.0,
+      "citation.unsupported_rate" : 0.0,
+      "citation.validity" : 1.0,
+      "answer.rubric_coverage" : 0.875,
+      "retrieval.ndcg_at_3" : 0.9538662191964322,
+      "latency.total_p50_ms" : 1.0,
+      "retrieval.no_result_precision" : 0.0,
+      "retrieval.recall_at_3" : 1.0,
+      "citation.coverage" : 1.0,
+      "retrieval.recall_at_1" : 0.875,
       "tool_selection.f1" : 1.0,
-      "retrieval.recall_at_1" : 0.875
+      "latency.retrieval_p50_ms" : 1.0,
+      "answer.no_evidence_hallucination_rate" : 1.0,
+      "latency.total_p95_ms" : 3.0
     }
   },
-  "comparisonStatus" : "candidate_compared_to_baseline",
-  "baselineMetrics" : {
-    "retrieval.recall_at_1" : 0.875,
-    "retrieval.recall_at_3" : 1.0,
-    "retrieval.no_result_precision" : 0.0,
-    "latency.total_p50_ms" : 1.0,
-    "retrieval.ndcg_at_3" : 0.9538662191964322,
-    "answer.rubric_coverage" : 0.875,
-    "citation.unsupported_rate" : 0.0,
-    "citation.validity" : 1.0,
-    "tool_selection.precision" : 1.0,
-    "latency.embedding_p50_ms" : 0.0,
-    "retrieval.mrr" : 0.9375,
-    "tool_selection.recall" : 1.0,
-    "latency.total_p95_ms" : 3.0,
-    "answer.no_evidence_hallucination_rate" : 1.0,
-    "latency.retrieval_p50_ms" : 1.0,
-    "tool_selection.f1" : 1.0,
-    "citation.coverage" : 1.0
-  },
-  "metricDeltas" : {
-    "retrieval.recall_at_1" : 0.0,
-    "retrieval.recall_at_3" : 0.0,
-    "retrieval.no_result_precision" : 0.0,
-    "latency.total_p50_ms" : 1.0,
-    "retrieval.ndcg_at_3" : 0.0,
-    "answer.rubric_coverage" : 0.0,
-    "citation.validity" : 0.0,
-    "citation.unsupported_rate" : 0.0,
-    "tool_selection.precision" : 0.0,
-    "tool_selection.recall" : 0.0,
-    "retrieval.mrr" : 0.0,
-    "latency.embedding_p50_ms" : 0.0,
-    "latency.total_p95_ms" : 4.0,
-    "answer.no_evidence_hallucination_rate" : 0.0,
-    "latency.retrieval_p50_ms" : 1.0,
-    "tool_selection.f1" : 0.0,
-    "citation.coverage" : 0.0
-  },
+  "comparisonStatus" : "baseline_created",
+  "baselineMetrics" : { },
+  "metricDeltas" : { },
   "runtimeMetadata" : {
-    "promptTemplate" : "medical-agent-react",
-    "embeddingDimension" : "256",
-    "embeddingProvider" : "hash",
-    "modelProvider" : "stub",
     "documentsDirectory" : "evaluation/corpus",
-    "modelMaxTokens" : "256",
-    "embeddingModelPath" : "/mnt/Data/multi-agent/Qwen/Qwen3-Embedding-4B",
-    "modelName" : "evaluation-replay-model",
-    "topK" : "3",
-    "evaluationMode" : "offline",
+    "embeddingDimension" : "256",
     "profile" : "evaluation",
-    "modelTemperature" : "0.0"
+    "embeddingProvider" : "hash",
+    "topK" : "3"
   },
   "cases" : [ {
     "caseId" : "retrieval-01",
@@ -95,10 +52,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 29,
+    "retrievalMillis" : 19,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 32,
+    "totalMillis" : 20,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-02",
@@ -113,10 +70,10 @@
     "citationValid" : true,
     "rubricMatched" : false,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 6,
+    "retrievalMillis" : 3,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 7,
+    "totalMillis" : 3,
     "failureReasons" : [ "answer_rubric_not_matched" ]
   }, {
     "caseId" : "retrieval-03",
@@ -131,10 +88,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 4,
+    "retrievalMillis" : 2,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 4,
+    "totalMillis" : 2,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-04",
@@ -149,10 +106,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 5,
+    "retrievalMillis" : 2,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 5,
+    "totalMillis" : 2,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-05",
@@ -167,10 +124,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 5,
+    "retrievalMillis" : 2,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 5,
+    "totalMillis" : 2,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-06",
@@ -185,10 +142,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 3,
+    "retrievalMillis" : 2,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 4,
+    "totalMillis" : 2,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-07",
@@ -203,10 +160,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 4,
+    "retrievalMillis" : 1,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 4,
+    "totalMillis" : 1,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-08",
@@ -221,10 +178,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 3,
+    "retrievalMillis" : 2,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 3,
+    "totalMillis" : 2,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-09",
@@ -242,7 +199,7 @@
     "retrievalMillis" : 2,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 3,
+    "totalMillis" : 2,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-10",
@@ -257,10 +214,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 3,
+    "retrievalMillis" : 1,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 3,
+    "totalMillis" : 1,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-11",
@@ -275,10 +232,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 2,
+    "retrievalMillis" : 1,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 2,
+    "totalMillis" : 1,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-12",
@@ -293,10 +250,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 3,
+    "retrievalMillis" : 1,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 4,
+    "totalMillis" : 1,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-13",
@@ -311,10 +268,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 2,
+    "retrievalMillis" : 1,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 2,
+    "totalMillis" : 1,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-14",
@@ -329,10 +286,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 2,
+    "retrievalMillis" : 1,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 2,
+    "totalMillis" : 1,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-15",
@@ -347,10 +304,10 @@
     "citationValid" : true,
     "rubricMatched" : true,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 3,
+    "retrievalMillis" : 1,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 4,
+    "totalMillis" : 1,
     "failureReasons" : [ ]
   }, {
     "caseId" : "retrieval-16",
@@ -365,10 +322,10 @@
     "citationValid" : true,
     "rubricMatched" : false,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 2,
+    "retrievalMillis" : 1,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 2,
+    "totalMillis" : 1,
     "failureReasons" : [ "answer_rubric_not_matched" ]
   }, {
     "caseId" : "no-result-01",
@@ -383,10 +340,10 @@
     "citationValid" : true,
     "rubricMatched" : false,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 4,
+    "retrievalMillis" : 1,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 4,
+    "totalMillis" : 1,
     "failureReasons" : [ "unexpected_evidence", "answer_rubric_not_matched" ]
   }, {
     "caseId" : "no-result-02",
@@ -401,10 +358,10 @@
     "citationValid" : true,
     "rubricMatched" : false,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 2,
+    "retrievalMillis" : 1,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 2,
+    "totalMillis" : 1,
     "failureReasons" : [ "unexpected_evidence", "answer_rubric_not_matched" ]
   }, {
     "caseId" : "no-result-03",
@@ -419,10 +376,10 @@
     "citationValid" : true,
     "rubricMatched" : false,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 4,
+    "retrievalMillis" : 1,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 4,
+    "totalMillis" : 1,
     "failureReasons" : [ "unexpected_evidence", "answer_rubric_not_matched" ]
   }, {
     "caseId" : "no-result-04",
@@ -437,10 +394,10 @@
     "citationValid" : true,
     "rubricMatched" : false,
     "embeddingMillis" : 0,
-    "retrievalMillis" : 2,
+    "retrievalMillis" : 1,
     "toolDecisionMillis" : 0,
     "modelMillis" : 0,
-    "totalMillis" : 2,
+    "totalMillis" : 1,
     "failureReasons" : [ "unexpected_evidence", "answer_rubric_not_matched" ]
   }, {
     "caseId" : "no-tool-01",
