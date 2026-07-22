@@ -1,0 +1,9 @@
+version: t017-v1
+minimumMetrics:
+  memory.recall_accuracy: 1.0
+  tool_selection.f1: 1.0
+  planning.success_rate: 1.0
+  safety.emergency_recall: 1.0
+  safety.risk_assessment_accuracy: 1.0
+  response.completeness: 0.85
+  tracing.correlation_rate: 1.0
