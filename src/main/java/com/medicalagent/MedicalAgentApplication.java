@@ -24,9 +24,15 @@ import com.medicalagent.prompt.FilePromptLoader;
 import com.medicalagent.prompt.PromptRenderer;
 import com.medicalagent.prompt.PromptVariablesFactory;
 import com.medicalagent.runtime.ToolRouter;
+import com.medicalagent.tracing.TraceRuntime;
+import com.medicalagent.tracing.TraceRuntimeFactory;
+import com.medicalagent.tracing.TracingLocalModelGateway;
 import com.medicalagent.skills.EchoSkill;
+import com.medicalagent.skills.EmergencyDetectionSkill;
+import com.medicalagent.skills.GroundingCheckSkill;
 import com.medicalagent.skills.MemoryReadSkill;
 import com.medicalagent.skills.MemoryWriteSkill;
+import com.medicalagent.skills.RiskAssessmentSkill;
 import com.medicalagent.skills.LongTermMemoryReadSkill;
 import com.medicalagent.skills.LongTermMemoryWriteSkill;
 import com.medicalagent.skills.KnowledgeSearchSkill;
@@ -45,6 +51,7 @@ public class MedicalAgentApplication {
     public static void main(String[] args) throws IOException {
         String profile = System.getProperty("app.profile", "local");
         AppConfig appConfig = new ConfigLoader().load(profile);
+        TraceRuntime traceRuntime = new TraceRuntimeFactory().create(appConfig.getTracing());
         SessionMemoryStore sessionMemoryStore = new InMemorySessionMemoryStore(Duration.ofMinutes(appConfig.getMemory().getSessionTtlMinutes()));
         LongTermMemoryStore longTermMemoryStore = new LongTermMemoryStoreFactory().create(appConfig.getMemory());
         SummaryMemoryStore summaryMemoryStore = new SummaryMemoryStoreFactory().create(appConfig.getMemory());
@@ -56,7 +63,10 @@ public class MedicalAgentApplication {
                 new LongTermMemoryReadSkill(longTermMemoryStore),
                 new LongTermMemoryWriteSkill(longTermMemoryStore),
                 new SummaryMemoryReadSkill(summaryMemoryStore),
-                new SummaryMemoryWriteSkill(summaryMemoryStore)
+                new SummaryMemoryWriteSkill(summaryMemoryStore),
+                new EmergencyDetectionSkill(),
+                new RiskAssessmentSkill(),
+                new GroundingCheckSkill()
         ));
         KnowledgeService knowledgeService = new KnowledgeServiceFactory()
                 .create(appConfig.getKnowledge())
@@ -67,11 +77,13 @@ public class MedicalAgentApplication {
             Runtime.getRuntime().addShutdownHook(new Thread(knowledgeService::close, "api-knowledge-embedding-shutdown"));
         }
         SkillRegistry skillRegistry = new SkillRegistry(appConfig, skills);
-        ToolRouter toolRouter = new ToolRouter(skillRegistry);
-        LocalModelGateway localModelGateway = new LocalModelGatewayRegistry(List.of(
+        ToolRouter toolRouter = new ToolRouter(skillRegistry, traceRuntime.sink(),
+                appConfig.getTracing().getMaxPayloadCharacters(), appConfig.getTracing().getSlowCallMillis());
+        LocalModelGateway localModelGateway = new TracingLocalModelGateway(new LocalModelGatewayRegistry(List.of(
                 new StubLocalModelGatewayFactory(),
                 new PythonTransformersLocalModelGatewayFactory()
-        )).create(appConfig);
+        )).create(appConfig), traceRuntime.sink(), appConfig.getTracing().getMaxPayloadCharacters(),
+                appConfig.getTracing().getSlowCallMillis());
         localModelGateway.preload();
         Runtime.getRuntime().addShutdownHook(new Thread(localModelGateway::shutdown, "api-local-model-shutdown"));
         AgentKernel agentKernel = new AgentKernel(
@@ -82,7 +94,8 @@ public class MedicalAgentApplication {
                 new PromptVariablesFactory(appConfig.getContext()),
                 new PromptRenderer(appConfig.getPrompt()),
                 localModelGateway,
-                new AgentDecisionParser()
+                new AgentDecisionParser(),
+                traceRuntime.sink()
         );
         AgentContextFactory contextFactory = new AgentContextFactory(appConfig);
         AgentController controller = new AgentController(contextFactory, agentKernel);

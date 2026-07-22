@@ -60,6 +60,7 @@ class AgentContextFactoryTest {
         assertEquals("pending", first.getToolFacts().get("triage").asText());
         assertNull(first.getEmergencyFlag());
         assertEquals("web", first.getMetadata().get("channel"));
+        assertEquals(first.getRequestId(), first.getMetadata().get("traceId"));
         assertEquals(1, first.getHistory().size());
         assertEquals("2026-07-05T08:00:00Z", first.getCreatedAt().toString());
         assertEquals(config.getApi().getRequestTimeoutMillis(), first.getRequestTimeoutMillis());

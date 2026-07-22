@@ -1,0 +1,33 @@
+runtime:
+  environment: swarm-test
+
+api:
+  enabled: false
+
+swarm:
+  enabled: true
+  maxRoles: 4
+  maxPlanSteps: 4
+  roleTimeoutMillis: 3000
+  fallbackToSingleAgent: true
+
+model:
+  provider: stub
+  name: swarm-stub
+  path: /tmp/swarm-stub-model
+  temperature: 0.0
+  maxTokens: 256
+
+memory:
+  longTermSqlitePath: target/swarm-cli-long-term-memory.db
+  summarySqlitePath: target/swarm-cli-summary-memory.db
+
+knowledge:
+  documentsDirectory: src/test/resources/knowledge
+  indexSqlitePath: target/swarm-cli-knowledge-index.db
+  embeddingProvider: hash
+  embeddingDimension: 64
+  chunkMaxCharacters: 180
+  chunkOverlapCharacters: 20
+  defaultTopK: 2
+  minScore: -1.0

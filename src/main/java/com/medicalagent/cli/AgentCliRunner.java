@@ -64,6 +64,7 @@ public class AgentCliRunner {
                     response = requestHandler.apply(buildRequest(command.payload()));
                 }
                 console.println("Agent> " + response.answer());
+                console.println("Trace> " + response.traceId());
                 session.appendTurn(command.payload(), response.answer());
             } catch (RuntimeException exception) {
                 console.println("Agent> Error: " + exception.getMessage());

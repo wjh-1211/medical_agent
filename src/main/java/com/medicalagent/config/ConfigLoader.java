@@ -52,6 +52,13 @@ public class ConfigLoader {
         if (config.getRuntime().getMaxReActLoops() <= 0) {
             throw new ConfigException("runtime.maxReActLoops must be greater than 0");
         }
+        validatePositive(config.getTracing().getMaxPayloadCharacters(), "tracing.maxPayloadCharacters");
+        if (config.getTracing().getSlowCallMillis() < 0L) {
+            throw new ConfigException("tracing.slowCallMillis must not be negative");
+        }
+        validatePositive(config.getSwarm().getMaxRoles(), "swarm.maxRoles");
+        validatePositive(config.getSwarm().getMaxPlanSteps(), "swarm.maxPlanSteps");
+        validatePositive(config.getSwarm().getRoleTimeoutMillis(), "swarm.roleTimeoutMillis");
         if (config.getApi().getPort() <= 0) {
             throw new ConfigException("api.port must be greater than 0");
         }

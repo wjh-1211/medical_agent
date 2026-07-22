@@ -1,0 +1,23 @@
+{
+  "taskId": "T015",
+  "evaluatorVersion": "t015-v1",
+  "mode": "deterministic-fixture-and-cli-test-profile",
+  "caseCount": 5,
+  "passedCaseCount": 5,
+  "metrics": {
+    "tracing.request_correlation_rate": 1.0,
+    "tracing.tool_success_capture_rate": 1.0,
+    "tracing.tool_failure_capture_rate": 1.0,
+    "tracing.model_timeout_classification_rate": 1.0,
+    "tracing.invalid_model_output_classification_rate": 1.0,
+    "tracing.guardrail_block_capture_rate": 1.0
+  },
+  "cases": [
+    { "caseId": "request-trace-correlation", "result": "passed" },
+    { "caseId": "tool-success-and-failure", "result": "passed" },
+    { "caseId": "model-timeout-classification", "result": "passed" },
+    { "caseId": "invalid-model-json-classification", "result": "passed" },
+    { "caseId": "guardrail-blocked-action", "result": "passed" }
+  ],
+  "evidence": "./mvnw test passed 74 tests; printf '你好\\n/exit\\n' | ./cli.sh test emitted correlated [trace] events and Trace> output."
+}

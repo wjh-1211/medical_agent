@@ -1,0 +1,36 @@
+{
+  "taskId": "T014",
+  "evaluatorVersion": "t014-v1",
+  "mode": "deterministic-fixture",
+  "caseCount": 4,
+  "passedCaseCount": 4,
+  "metrics": {
+    "guardrail.case_pass_rate": 1.0,
+    "guardrail.emergency_escalation_rate": 1.0,
+    "guardrail.invalid_citation_block_rate": 1.0,
+    "guardrail.low_risk_pass_through_rate": 1.0
+  },
+  "cases": [
+    {
+      "caseId": "emergency-escalation",
+      "expectedAction": "escalate",
+      "result": "passed"
+    },
+    {
+      "caseId": "high-risk-limit",
+      "expectedAction": "limit",
+      "result": "passed"
+    },
+    {
+      "caseId": "invalid-citation-limit",
+      "expectedAction": "limit",
+      "result": "passed"
+    },
+    {
+      "caseId": "low-risk-allow",
+      "expectedAction": "allow",
+      "result": "passed"
+    }
+  ],
+  "evidence": "GuardrailPipelineTest and GuardrailSkillsTest executed by ./mvnw test; 70 total tests passed."
+}

@@ -3,6 +3,18 @@ runtime:
   maxReActLoops: 3
   toolLoggingEnabled: true
 
+tracing:
+  enabled: true
+  maxPayloadCharacters: 320
+  slowCallMillis: 1000
+
+swarm:
+  enabled: false
+  maxRoles: 4
+  maxPlanSteps: 4
+  roleTimeoutMillis: 3000
+  fallbackToSingleAgent: true
+
 api:
   enabled: true
   host: 127.0.0.1
@@ -72,6 +84,11 @@ guardrail:
   riskAssessmentEnabled: true
   groundingCheckEnabled: true
   autoDisclaimerEnabled: true
+  blockOnDecisionFailure: true
+  emergencySafeAnswer: 当前描述可能存在紧急风险。请尽快联系当地急救服务或立即前往急诊；如身边有人，请让对方协助，不要独自驾驶。
+  highRiskSafeAnswer: 当前信息提示需要尽快进行线下医疗评估。为避免延误或不恰当的个体化建议，请联系医生、药师或就近医疗机构进一步确认。
+  insufficientEvidenceSafeAnswer: 当前可用信息或受控资料不足以支持确定性结论。请补充症状变化、持续时间、既往病史和正在使用的药物；如症状加重或出现危险信号，请及时就医。
+  decisionFailureSafeAnswer: 当前无法完成必要的安全评估，因此不适合给出确定性医疗建议。请联系医生、药师或就近医疗机构进一步评估；如症状紧急，请立即寻求急救帮助。
 
 timeout:
   modelCallMillis: 30000
@@ -138,3 +155,21 @@ skills:
     implementation: com.medicalagent.skills.KnowledgeSearchSkill
     options:
       owner: knowledge
+  emergencyDetectionSkill:
+    enabled: true
+    toolName: emergency_detection
+    implementation: com.medicalagent.skills.EmergencyDetectionSkill
+    options:
+      owner: safety
+  riskAssessmentSkill:
+    enabled: true
+    toolName: risk_assessment
+    implementation: com.medicalagent.skills.RiskAssessmentSkill
+    options:
+      owner: safety
+  groundingCheckSkill:
+    enabled: true
+    toolName: grounding_check
+    implementation: com.medicalagent.skills.GroundingCheckSkill
+    options:
+      owner: safety

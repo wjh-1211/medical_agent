@@ -21,6 +21,13 @@ import com.medicalagent.skills.KnowledgeSearchSkill;
 import com.medicalagent.skills.SummaryMemoryReadSkill;
 import com.medicalagent.skills.SkillRegistry;
 import com.medicalagent.skills.ToolSchema;
+import com.medicalagent.swarm.SwarmOrchestrator;
+import com.medicalagent.swarm.SwarmOutcome;
+import com.medicalagent.tracing.TraceEventType;
+import com.medicalagent.tracing.TraceScope;
+import com.medicalagent.tracing.TraceSink;
+import com.medicalagent.tracing.TraceStatus;
+import com.medicalagent.tracing.TraceSupport;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,12 +44,58 @@ public record AgentKernel(
         PromptVariablesFactory promptVariablesFactory,
         PromptRenderer promptRenderer,
         LocalModelGateway localModelGateway,
-        AgentDecisionParser agentDecisionParser
+        AgentDecisionParser agentDecisionParser,
+        TraceSink traceSink
 ) {
 
     private static final Logger LOGGER = Logger.getLogger(AgentKernel.class.getName());
 
+    public AgentKernel(
+            AppConfig config,
+            SkillRegistry skillRegistry,
+            ToolRouter toolRouter,
+            PromptLoader promptLoader,
+            PromptVariablesFactory promptVariablesFactory,
+            PromptRenderer promptRenderer,
+            LocalModelGateway localModelGateway,
+            AgentDecisionParser agentDecisionParser
+    ) {
+        this(config, skillRegistry, toolRouter, promptLoader, promptVariablesFactory, promptRenderer,
+                localModelGateway, agentDecisionParser, event -> { });
+    }
+
+    public AgentKernel {
+        traceSink = traceSink == null ? event -> { } : traceSink;
+    }
+
     public AgentResponse handle(AgentContext context) {
+        String traceId = context.getMetadata().getOrDefault("traceId", context.getRequestId());
+        long startedAt = System.nanoTime();
+        traceSink.record(TraceSupport.event(
+                traceId, TraceEventType.REQUEST_STARTED, "agent.request", TraceStatus.STARTED, 0L,
+                null, context.getMessage(), "", Map.of("channel", context.getMetadata().getOrDefault("channel", "unknown")),
+                config.getTracing().getMaxPayloadCharacters()
+        ));
+        try (TraceScope ignored = TraceScope.open(traceId)) {
+            AgentResponse response = handleInternal(context, traceId);
+            traceSink.record(TraceSupport.event(
+                    traceId, TraceEventType.REQUEST_COMPLETED, "agent.request", TraceStatus.SUCCEEDED,
+                    elapsedMillis(startedAt), null, "", response.answer(),
+                    Map.of("emergency", Boolean.toString(Boolean.TRUE.equals(response.emergencyFlag()))),
+                    config.getTracing().getMaxPayloadCharacters()
+            ));
+            return response;
+        } catch (RuntimeException exception) {
+            traceSink.record(TraceSupport.event(
+                    traceId, TraceEventType.REQUEST_FAILED, "agent.request", TraceStatus.FAILED,
+                    elapsedMillis(startedAt), exception, context.getMessage(), "", Map.of(),
+                    config.getTracing().getMaxPayloadCharacters()
+            ));
+            throw exception;
+        }
+    }
+
+    private AgentResponse handleInternal(AgentContext context, String traceId) {
         long requestStartedAt = System.nanoTime();
         JsonNode recalledSessionMemory = recallSessionMemory(context);
         JsonNode recalledLongTermMemory = recallLongTermMemory(context);
@@ -71,16 +124,29 @@ public record AgentKernel(
         int loopsUsed = 0;
 
         if (finalAnswer == null) {
-            skillRegistry.findSchemaByToolName(KnowledgeSearchSkill.TOOL_NAME)
-                    .flatMap(schema -> new KnowledgeRetrievalDecisionAgent(
-                            promptLoader,
-                            promptVariablesFactory,
-                            promptRenderer,
-                            localModelGateway,
-                            agentDecisionParser,
-                            config.getTimeout().getModelCallMillis()
-                    ).decide(promptContext, schema))
-                    .ifPresent(decision -> observations.add(executeToolAndCreateObservation(decision)));
+            SwarmOutcome swarmOutcome = new SwarmOrchestrator(
+                    config,
+                    skillRegistry,
+                    toolRouter,
+                    promptLoader,
+                    promptVariablesFactory,
+                    promptRenderer,
+                    localModelGateway,
+                    traceSink
+            ).orchestrate(promptContext);
+            observations.addAll(swarmOutcome.observations());
+            if (!swarmOutcome.hasKnowledgeObservation()) {
+                skillRegistry.findSchemaByToolName(KnowledgeSearchSkill.TOOL_NAME)
+                        .flatMap(schema -> new KnowledgeRetrievalDecisionAgent(
+                                promptLoader,
+                                promptVariablesFactory,
+                                promptRenderer,
+                                localModelGateway,
+                                agentDecisionParser,
+                                config.getTimeout().getModelCallMillis()
+                        ).decide(promptContext, schema))
+                        .ifPresent(decision -> observations.add(executeToolAndCreateObservation(decision)));
+            }
         }
 
         for (int loop = 0; finalAnswer == null && loop < maxLoops; loop++) {
@@ -111,29 +177,61 @@ public record AgentKernel(
             throw new IllegalStateException("Agent did not reach final_answer within maxReActLoops=" + maxLoops);
         }
         finalAnswer = appendKnowledgeSourceMarker(finalAnswer, observations);
+        String candidateAnswer = finalAnswer;
+        GuardrailOutcome guardrailOutcome = new GuardrailPipeline(
+                config,
+                skillRegistry,
+                toolRouter,
+                new GuardrailDecisionAgent(
+                        promptLoader,
+                        promptVariablesFactory,
+                        promptRenderer,
+                        localModelGateway,
+                        agentDecisionParser,
+                        config.getTimeout().getModelCallMillis()
+                )
+        ).apply(promptContext, candidateAnswer, observations);
+        finalAnswer = guardrailOutcome.answer();
+        traceSink.record(TraceSupport.event(
+                traceId,
+                TraceEventType.GUARDRAIL_ACTION,
+                "guardrail.pipeline",
+                candidateAnswer.equals(finalAnswer) ? TraceStatus.SUCCEEDED : TraceStatus.BLOCKED,
+                0L,
+                null,
+                "",
+                finalAnswer,
+                Map.of(
+                        "emergency", Boolean.toString(guardrailOutcome.emergency()),
+                        "resultCount", Integer.toString(guardrailOutcome.results().size())
+                ),
+                config.getTracing().getMaxPayloadCharacters()
+        ));
 
-        new LongTermMemoryUpdateAgent(
-                skillRegistry,
-                toolRouter,
-                promptLoader,
-                promptVariablesFactory,
-                promptRenderer,
-                localModelGateway,
-                agentDecisionParser,
-                config.getTimeout().getModelCallMillis()
-        ).update(context, finalAnswer);
-        new SummaryMemoryUpdateAgent(
-                skillRegistry,
-                toolRouter,
-                promptLoader,
-                promptVariablesFactory,
-                promptRenderer,
-                localModelGateway,
-                agentDecisionParser,
-                config.getContext(),
-                config.getTimeout().getModelCallMillis()
-        ).update(context, finalAnswer);
-        writeSessionMemory(context, finalAnswer);
+        if (!guardrailOutcome.emergency()) {
+            new LongTermMemoryUpdateAgent(
+                    skillRegistry,
+                    toolRouter,
+                    promptLoader,
+                    promptVariablesFactory,
+                    promptRenderer,
+                    localModelGateway,
+                    agentDecisionParser,
+                    config.getTimeout().getModelCallMillis()
+            ).update(context, finalAnswer);
+            new SummaryMemoryUpdateAgent(
+                    skillRegistry,
+                    toolRouter,
+                    promptLoader,
+                    promptVariablesFactory,
+                    promptRenderer,
+                    localModelGateway,
+                    agentDecisionParser,
+                    config.getContext(),
+                    config.getTimeout().getModelCallMillis()
+            ).update(context, finalAnswer);
+            writeSessionMemory(context, finalAnswer);
+        }
         logPerformanceSummary(context, requestStartedAt, loopsUsed, totalModelMillis, totalPromptCharacters, totalOutputCharacters);
 
         return new AgentResponse(
@@ -141,10 +239,15 @@ public record AgentKernel(
                 context.getRequestId(),
                 context.getSessionId(),
                 context.getUserId(),
+                traceId,
                 finalAnswer,
-                context.getEmergencyFlag(),
+                guardrailOutcome.emergency() || Boolean.TRUE.equals(context.getEmergencyFlag()),
                 context.getCreatedAt().toString()
         );
+    }
+
+    private long elapsedMillis(long startedAt) {
+        return (System.nanoTime() - startedAt) / 1_000_000L;
     }
 
     private JsonNode executeToolAndCreateObservation(AgentDecision decision) {

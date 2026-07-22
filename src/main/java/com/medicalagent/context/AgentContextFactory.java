@@ -45,6 +45,8 @@ public class AgentContextFactory {
     public AgentContext create(AgentRequest request) {
         String requestId = requestIdSupplier.get();
         String sessionId = resolveSessionId(request.sessionId());
+        Map<String, String> metadata = normalizeMetadata(request.metadata());
+        metadata.put("traceId", requestId);
         return AgentContext.builder()
                 .requestId(requestId)
                 .sessionId(sessionId)
@@ -54,7 +56,7 @@ public class AgentContextFactory {
                 .memorySummary(normalizeOptionalText(request.memorySummary()))
                 .toolFacts(normalizeToolFacts(request.toolFacts()))
                 .emergencyFlag(request.emergencyFlag())
-                .metadata(normalizeMetadata(request.metadata()))
+                .metadata(metadata)
                 .createdAt(clock.instant())
                 .requestTimeoutMillis(config.getApi().getRequestTimeoutMillis())
                 .build();
@@ -112,7 +114,7 @@ public class AgentContextFactory {
 
     private Map<String, String> normalizeMetadata(Map<String, String> metadata) {
         if (metadata == null || metadata.isEmpty()) {
-            return Map.of();
+            return new LinkedHashMap<>();
         }
         Map<String, String> normalized = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : metadata.entrySet()) {

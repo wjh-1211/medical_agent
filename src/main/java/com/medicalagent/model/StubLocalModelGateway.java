@@ -38,6 +38,18 @@ public class StubLocalModelGateway implements LocalModelGateway {
     }
 
     private String generateStructuredResponse(String prompt) {
+        if (prompt.contains("# Swarm Planner")) {
+            return "{\"mode\":\"swarm\",\"tasks\":[{\"role\":\"memory\",\"query\":\"\"},{\"role\":\"retriever\",\"query\":\"呼吸困难 就医提示\"},{\"role\":\"safety\",\"query\":\"\"},{\"role\":\"answer\",\"query\":\"\"}]}";
+        }
+        if (prompt.contains("# Emergency Detection Guardrail")) {
+            return "{\"emergency\":false,\"urgency\":\"none\",\"reason\":\"stub non-emergency fixture\"}";
+        }
+        if (prompt.contains("# Risk Assessment Guardrail")) {
+            return "{\"riskLevel\":\"low\",\"requiresFollowUp\":false,\"reason\":\"stub low-risk fixture\"}";
+        }
+        if (prompt.contains("# Grounding Check Guardrail")) {
+            return "{\"requiresEvidence\":false,\"reason\":\"stub grounding fixture\"}";
+        }
         if (hasObservation(prompt)) {
             return buildFinalAnswerResponse(extractLatestObservation(prompt), extractMemorySummary(prompt));
         }

@@ -8,6 +8,7 @@ import java.io.InputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ConfigLoaderTest {
 
@@ -32,6 +33,21 @@ class ConfigLoaderTest {
         assertEquals("hash", config.getKnowledge().getEmbeddingProvider());
         assertEquals(64, config.getKnowledge().getEmbeddingDimension());
         assertEquals("src/test/resources/knowledge", config.getKnowledge().getDocumentsDirectory());
+        assertTrue(config.getTracing().isEnabled());
+        assertEquals(320, config.getTracing().getMaxPayloadCharacters());
+        assertTrue(!config.getSwarm().isEnabled());
+        assertEquals(4, config.getSwarm().getMaxRoles());
+        assertTrue(config.getGuardrail().isBlockOnDecisionFailure());
+        assertEquals("当前描述可能存在紧急风险。请尽快联系当地急救服务或立即前往急诊；如身边有人，请让对方协助，不要独自驾驶。", config.getGuardrail().getEmergencySafeAnswer());
+    }
+
+    @Test
+    void shouldEnableDedicatedSwarmCliProfile() {
+        AppConfig config = new ConfigLoader().load("swarm-test");
+
+        assertTrue(config.getSwarm().isEnabled());
+        assertEquals("stub", config.getModel().getProvider());
+        assertEquals("swarm-test", config.getRuntime().getEnvironment());
     }
 
     @Test

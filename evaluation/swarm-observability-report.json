@@ -1,0 +1,28 @@
+{
+  "taskId": "T016",
+  "evaluatorVersion": "t016-v1",
+  "mode": "deterministic-fixture-and-cli-swarm-test-profile",
+  "caseCount": 9,
+  "passedCaseCount": 9,
+  "metrics": {
+    "swarm.default_disabled_fallback_rate": 1.0,
+    "swarm.valid_plan_execution_rate": 1.0,
+    "swarm.invalid_plan_single_agent_fallback_rate": 1.0,
+    "swarm.role_failure_single_agent_fallback_rate": 1.0,
+    "swarm.role_timeout_single_agent_fallback_rate": 1.0,
+    "swarm.trace_id_correlation_rate": 1.0,
+    "swarm.guardrail_after_merge_rate": 1.0
+  },
+  "cases": [
+    { "caseId": "single-agent-plan-contract", "result": "passed" },
+    { "caseId": "bounded-complex-plan-contract", "result": "passed" },
+    { "caseId": "invalid-plan-and-duplicate-role-rejected", "result": "passed" },
+    { "caseId": "swarm-disabled-no-planner-call", "result": "passed" },
+    { "caseId": "retriever-safety-sequential-roles-and-merge", "result": "passed" },
+    { "caseId": "invalid-planner-json-fallback", "result": "passed" },
+    { "caseId": "role-execution-failure-fallback", "result": "passed" },
+    { "caseId": "role-timeout-fallback", "result": "passed" },
+    { "caseId": "kernel-swarm-evidence-and-guardrail", "result": "passed" }
+  ],
+  "evidence": "./mvnw test passed 85 tests. The swarm-test CLI profile emitted SWARM_PLAN, four SWARM_ROLE events, SWARM_MERGE, knowledge_search, GUARDRAIL_ACTION, and REQUEST_COMPLETED with one TraceId."
+}

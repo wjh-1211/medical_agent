@@ -6,6 +6,8 @@ import java.util.Map;
 public class AppConfig {
 
     private RuntimeConfig runtime = new RuntimeConfig();
+    private TracingConfig tracing = new TracingConfig();
+    private SwarmConfig swarm = new SwarmConfig();
     private ApiConfig api = new ApiConfig();
     private SessionConfig session = new SessionConfig();
     private PromptConfig prompt = new PromptConfig();
@@ -25,6 +27,22 @@ public class AppConfig {
 
     public void setRuntime(RuntimeConfig runtime) {
         this.runtime = runtime;
+    }
+
+    public TracingConfig getTracing() {
+        return tracing;
+    }
+
+    public void setTracing(TracingConfig tracing) {
+        this.tracing = tracing;
+    }
+
+    public SwarmConfig getSwarm() {
+        return swarm;
+    }
+
+    public void setSwarm(SwarmConfig swarm) {
+        this.swarm = swarm;
     }
 
     public ApiConfig getApi() {

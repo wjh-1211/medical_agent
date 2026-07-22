@@ -5,6 +5,7 @@ public record AgentResponse(
         String requestId,
         String sessionId,
         String userId,
+        String traceId,
         String answer,
         Boolean emergencyFlag,
         String createdAt

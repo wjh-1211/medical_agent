@@ -16,3 +16,6 @@ timeout:
 cache:
   enabled: false
   provider: none
+
+swarm:
+  enabled: true

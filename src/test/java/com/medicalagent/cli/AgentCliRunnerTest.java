@@ -39,6 +39,7 @@ class AgentCliRunnerTest {
                             "req-" + requests.size(),
                             request.sessionId(),
                             request.userId(),
+                            "trace-" + requests.size(),
                             "reply-" + requests.size(),
                             false,
                             "2026-07-07T00:00:00Z"
@@ -55,6 +56,7 @@ class AgentCliRunnerTest {
         assertEquals("session-2", requests.get(2).sessionId());
         assertEquals(0, requests.get(2).history().size());
         assertTrue(console.outputs().stream().anyMatch(line -> line.contains("Agent> reply-1")));
+        assertTrue(console.outputs().stream().anyMatch(line -> line.contains("Trace> trace-1")));
         assertTrue(console.outputs().stream().anyMatch(line -> line.contains("思考中")));
         assertTrue(console.outputs().stream().anyMatch(line -> line.contains("Agent> Session reset.")));
         assertTrue(console.outputs().stream().anyMatch(line -> line.contains("Agent> Goodbye.")));

@@ -79,4 +79,24 @@ class FilePromptLoaderTest {
         assertTrue(template.content().contains("knowledge_retrieval_continue"));
         assertTrue(template.content().contains("受控知识库中，出现呼吸困难时有什么提示"));
     }
+
+    @Test
+    void shouldLoadGuardrailPrompts() {
+        AppConfig config = new ConfigLoader().load("test");
+
+        assertTrue(new FilePromptLoader(config.getPrompt()).load("emergency-detection").content().contains("emergency_detection"));
+        assertTrue(new FilePromptLoader(config.getPrompt()).load("risk-assessment").content().contains("risk_assessment"));
+        assertTrue(new FilePromptLoader(config.getPrompt()).load("grounding-check").content().contains("grounding_check"));
+    }
+
+    @Test
+    void shouldLoadSwarmPlannerPrompt() {
+        AppConfig config = new ConfigLoader().load("test");
+        PromptTemplate template = new FilePromptLoader(config.getPrompt()).load("swarm-planner");
+
+        assertTrue(template.content().contains("{{maxRoles}}"));
+        assertTrue(template.content().contains("{{maxPlanSteps}}"));
+        assertTrue(template.content().contains("single_agent"));
+        assertTrue(template.content().contains("Do not repeat a role"));
+    }
 }
