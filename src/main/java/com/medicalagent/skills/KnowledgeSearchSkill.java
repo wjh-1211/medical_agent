@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.medicalagent.common.JsonSupport;
 import com.medicalagent.knowledge.KnowledgeChunkMatch;
 import com.medicalagent.knowledge.KnowledgeRetriever;
+import com.medicalagent.knowledge.KnowledgeSearchTrace;
+import com.medicalagent.knowledge.KnowledgeService;
 
 import java.util.List;
 
@@ -49,11 +51,21 @@ public class KnowledgeSearchSkill implements Skill {
         if (query.isEmpty()) {
             throw new IllegalArgumentException("Knowledge search query must not be blank");
         }
-        List<KnowledgeChunkMatch> matches = knowledgeRetriever.search(query, topK);
+        KnowledgeSearchTrace trace = knowledgeRetriever instanceof KnowledgeService service
+                ? service.searchWithTrace(query, topK)
+                : new KnowledgeSearchTrace(knowledgeRetriever.search(query, topK), 0L, 0L);
+        List<KnowledgeChunkMatch> matches = trace.matches();
         ObjectNode output = JsonSupport.NODE_FACTORY.objectNode();
         output.put("status", "ok");
         output.put("query", query);
         output.put("found", !matches.isEmpty());
+        ObjectNode retrievalTrace = output.putObject("retrievalTrace");
+        retrievalTrace.put("strategy", trace.strategy());
+        retrievalTrace.put("embeddingMillis", trace.embeddingMillis());
+        retrievalTrace.put("vectorMillis", trace.retrievalMillis());
+        retrievalTrace.put("lexicalMillis", trace.lexicalMillis());
+        retrievalTrace.put("fusionMillis", trace.fusionMillis());
+        retrievalTrace.put("rerankMillis", trace.rerankMillis());
         ArrayNode chunks = output.putArray("chunks");
         for (KnowledgeChunkMatch match : matches) {
             ObjectNode chunk = chunks.addObject();

@@ -14,6 +14,11 @@ public class KnowledgeConfig {
     private int chunkOverlapCharacters = 100;
     private int defaultTopK = 3;
     private double minScore = 0.35d;
+    private String retrievalStrategy = "vector";
+    private int hybridCandidateMultiplier = 3;
+    private int rrfK = 60;
+    private boolean rerankEnabled = true;
+    private boolean hybridRequireLexicalMatch = true;
     private String queryInstruction = "Given a medical knowledge question, retrieve relevant passages that answer the question";
 
     public boolean isEnabled() { return enabled; }
@@ -40,6 +45,16 @@ public class KnowledgeConfig {
     public void setDefaultTopK(int defaultTopK) { this.defaultTopK = defaultTopK; }
     public double getMinScore() { return minScore; }
     public void setMinScore(double minScore) { this.minScore = minScore; }
+    public String getRetrievalStrategy() { return retrievalStrategy; }
+    public void setRetrievalStrategy(String retrievalStrategy) { this.retrievalStrategy = retrievalStrategy; }
+    public int getHybridCandidateMultiplier() { return hybridCandidateMultiplier; }
+    public void setHybridCandidateMultiplier(int hybridCandidateMultiplier) { this.hybridCandidateMultiplier = hybridCandidateMultiplier; }
+    public int getRrfK() { return rrfK; }
+    public void setRrfK(int rrfK) { this.rrfK = rrfK; }
+    public boolean isRerankEnabled() { return rerankEnabled; }
+    public void setRerankEnabled(boolean rerankEnabled) { this.rerankEnabled = rerankEnabled; }
+    public boolean isHybridRequireLexicalMatch() { return hybridRequireLexicalMatch; }
+    public void setHybridRequireLexicalMatch(boolean hybridRequireLexicalMatch) { this.hybridRequireLexicalMatch = hybridRequireLexicalMatch; }
     public String getQueryInstruction() { return queryInstruction; }
     public void setQueryInstruction(String queryInstruction) { this.queryInstruction = queryInstruction; }
 }

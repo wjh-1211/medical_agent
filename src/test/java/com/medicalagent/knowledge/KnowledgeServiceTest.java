@@ -32,4 +32,20 @@ class KnowledgeServiceTest {
         assertTrue(matches.get(0).chunk().chunkId().matches("[0-9a-f]{24}"));
         service.close();
     }
+
+    @Test
+    void shouldUseHybridRetrievalAndRejectNoLexicalEvidence() {
+        AppConfig config = new ConfigLoader().load("test");
+        config.getKnowledge().setIndexSqlitePath(temporaryDirectory.resolve("hybrid-knowledge.db").toString());
+        config.getKnowledge().setRetrievalStrategy("hybrid");
+        KnowledgeService service = new KnowledgeServiceFactory().create(config.getKnowledge()).orElseThrow();
+
+        service.rebuildIndex();
+        var trace = service.searchWithTrace("呼吸困难", 2);
+
+        assertEquals("hybrid", trace.strategy());
+        assertFalse(trace.matches().isEmpty());
+        assertTrue(service.search("zxqv-never-in-corpus", 2).isEmpty());
+        service.close();
+    }
 }

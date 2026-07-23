@@ -65,6 +65,11 @@ knowledge:
   chunkOverlapCharacters: 100
   defaultTopK: 3
   minScore: 0.35
+  retrievalStrategy: vector
+  hybridCandidateMultiplier: 3
+  rrfK: 60
+  rerankEnabled: true
+  hybridRequireLexicalMatch: true
   queryInstruction: Given a medical knowledge question, retrieve relevant passages that answer the question
 
 context:

@@ -1,31 +1,25 @@
 {
   "taskId" : "T017",
   "evaluatorVersion" : "t017-v1",
-  "generatedAt" : "2026-07-22T13:02:02.983539180Z",
+  "generatedAt" : "2026-07-22T13:38:04.383986103Z",
   "passed" : true,
   "reportInputs" : {
-    "rag" : "T013@evaluation-report.json",
     "guardrail" : "T014@evaluation/guardrail-evaluation-report.json",
-    "swarm" : "T016@evaluation/swarm-observability-report.json",
-    "runtime" : "T015@evaluation/runtime-observability-report.json"
+    "rag" : "T013@evaluation-report.json",
+    "runtime" : "T015@evaluation/runtime-observability-report.json",
+    "swarm" : "T016@evaluation/swarm-observability-report.json"
   },
   "metrics" : {
-    "response.completeness" : 0.875,
-    "planning.success_rate" : 1.0,
-    "safety.emergency_recall" : 1.0,
     "safety.risk_assessment_accuracy" : 1.0,
-    "tool_selection.f1" : 1.0,
+    "safety.emergency_recall" : 1.0,
+    "planning.success_rate" : 1.0,
+    "response.completeness" : 0.875,
+    "tracing.correlation_rate" : 1.0,
     "memory.recall_accuracy" : 1.0,
-    "tracing.correlation_rate" : 1.0
+    "tool_selection.f1" : 1.0
   },
   "checks" : [ {
-    "metric" : "response.completeness",
-    "actual" : 0.875,
-    "minimum" : 0.85,
-    "passed" : true,
-    "failureReason" : ""
-  }, {
-    "metric" : "planning.success_rate",
+    "metric" : "safety.risk_assessment_accuracy",
     "actual" : 1.0,
     "minimum" : 1.0,
     "passed" : true,
@@ -37,13 +31,19 @@
     "passed" : true,
     "failureReason" : ""
   }, {
-    "metric" : "safety.risk_assessment_accuracy",
+    "metric" : "planning.success_rate",
     "actual" : 1.0,
     "minimum" : 1.0,
     "passed" : true,
     "failureReason" : ""
   }, {
-    "metric" : "tool_selection.f1",
+    "metric" : "response.completeness",
+    "actual" : 0.875,
+    "minimum" : 0.85,
+    "passed" : true,
+    "failureReason" : ""
+  }, {
+    "metric" : "tracing.correlation_rate",
     "actual" : 1.0,
     "minimum" : 1.0,
     "passed" : true,
@@ -55,7 +55,7 @@
     "passed" : true,
     "failureReason" : ""
   }, {
-    "metric" : "tracing.correlation_rate",
+    "metric" : "tool_selection.f1",
     "actual" : 1.0,
     "minimum" : 1.0,
     "passed" : true,

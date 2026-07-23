@@ -123,6 +123,12 @@ public class ConfigLoader {
             validatePositive(config.getKnowledge().getChunkMaxCharacters(), "knowledge.chunkMaxCharacters");
             validatePositive(config.getKnowledge().getChunkOverlapCharacters(), "knowledge.chunkOverlapCharacters");
             validatePositive(config.getKnowledge().getDefaultTopK(), "knowledge.defaultTopK");
+            if (!"vector".equals(config.getKnowledge().getRetrievalStrategy())
+                    && !"hybrid".equals(config.getKnowledge().getRetrievalStrategy())) {
+                throw new ConfigException("knowledge.retrievalStrategy must be vector or hybrid");
+            }
+            validatePositive(config.getKnowledge().getHybridCandidateMultiplier(), "knowledge.hybridCandidateMultiplier");
+            validatePositive(config.getKnowledge().getRrfK(), "knowledge.rrfK");
             if (config.getKnowledge().getMinScore() < -1d || config.getKnowledge().getMinScore() > 1d) {
                 throw new ConfigException("knowledge.minScore must be between -1 and 1");
             }

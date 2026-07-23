@@ -22,6 +22,8 @@ public class RagEvaluationApplication {
         String profile = System.getProperty("app.profile", "evaluation");
         String mode = System.getProperty("evaluation.mode", "offline");
         AppConfig config = new ConfigLoader().load(profile);
+        String retrievalStrategy = System.getProperty("evaluation.retrievalStrategy", config.getKnowledge().getRetrievalStrategy());
+        config.getKnowledge().setRetrievalStrategy(retrievalStrategy);
         boolean localMode = "local".equals(mode);
         if (localMode) {
             config.getKnowledge().setDocumentsDirectory("evaluation/corpus");
@@ -67,6 +69,7 @@ public class RagEvaluationApplication {
             metadata.put("embeddingDimension", Integer.toString(config.getKnowledge().getEmbeddingDimension()));
             metadata.put("documentsDirectory", config.getKnowledge().getDocumentsDirectory());
             metadata.put("topK", Integer.toString(topK));
+            metadata.put("retrievalStrategy", retrievalStrategy);
             metadata.put("evaluationMode", mode);
             metadata.put("modelProvider", config.getModel().getProvider());
             metadata.put("modelName", config.getModel().getName());
@@ -105,7 +108,7 @@ public class RagEvaluationApplication {
             return new OfflineReplayRagCandidate(
                     knowledgeService,
                     topK,
-                    "vector-rag-" + config.getKnowledge().getEmbeddingProvider()
+                    config.getKnowledge().getRetrievalStrategy() + "-rag-" + config.getKnowledge().getEmbeddingProvider()
             );
         }
         LocalModelGateway modelGateway = new LocalModelGatewayRegistry(List.of(

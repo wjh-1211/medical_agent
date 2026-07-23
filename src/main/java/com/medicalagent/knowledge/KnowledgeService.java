@@ -19,6 +19,9 @@ public class KnowledgeService implements KnowledgeRetriever {
     private final QueryEmbeddingModel embeddingModel;
     private final SqliteKnowledgeVectorStore vectorStore;
     private final KnowledgeDocumentLoader documentLoader;
+    private volatile Bm25KnowledgeIndex bm25Index = new Bm25KnowledgeIndex(List.of());
+    private final ReciprocalRankFusion reciprocalRankFusion = new ReciprocalRankFusion();
+    private final KnowledgeReranker reranker = new KnowledgeReranker();
 
     public KnowledgeService(
             KnowledgeConfig config,
@@ -42,6 +45,7 @@ public class KnowledgeService implements KnowledgeRetriever {
         List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
         List<KnowledgeChunk> chunks = segments.stream().map(this::toChunk).toList();
         vectorStore.replaceAll(chunks, embeddings);
+        bm25Index = new Bm25KnowledgeIndex(chunks);
     }
 
     @Override
@@ -60,9 +64,28 @@ public class KnowledgeService implements KnowledgeRetriever {
         Embedding queryEmbedding = embeddingModel.embedQuery(query).content();
         long embeddingMillis = (System.nanoTime() - embeddingStartedAt) / 1_000_000L;
         long retrievalStartedAt = System.nanoTime();
-        List<KnowledgeChunkMatch> matches = vectorStore.search(queryEmbedding, topK, config.getMinScore());
-        long retrievalMillis = (System.nanoTime() - retrievalStartedAt) / 1_000_000L;
-        return new KnowledgeSearchTrace(matches, embeddingMillis, retrievalMillis);
+        if ("vector".equals(config.getRetrievalStrategy())) {
+            List<KnowledgeChunkMatch> matches = vectorStore.search(queryEmbedding, topK, config.getMinScore());
+            return new KnowledgeSearchTrace(matches, embeddingMillis, elapsedMillis(retrievalStartedAt), 0L, 0L, 0L, "vector");
+        }
+        int candidateLimit = topK * config.getHybridCandidateMultiplier();
+        List<KnowledgeChunkMatch> vectorMatches = vectorStore.search(queryEmbedding, candidateLimit, config.getMinScore());
+        long vectorMillis = elapsedMillis(retrievalStartedAt);
+        long lexicalStartedAt = System.nanoTime();
+        List<KnowledgeChunkMatch> lexicalMatches = bm25Index.search(query, candidateLimit);
+        long lexicalMillis = elapsedMillis(lexicalStartedAt);
+        if (config.isHybridRequireLexicalMatch() && lexicalMatches.isEmpty()) {
+            return new KnowledgeSearchTrace(List.of(), embeddingMillis, vectorMillis, lexicalMillis, 0L, 0L, "hybrid");
+        }
+        long fusionStartedAt = System.nanoTime();
+        List<KnowledgeChunkMatch> fused = reciprocalRankFusion.fuse(vectorMatches, lexicalMatches, config.getRrfK());
+        long fusionMillis = elapsedMillis(fusionStartedAt);
+        long rerankStartedAt = System.nanoTime();
+        List<KnowledgeChunkMatch> matches = config.isRerankEnabled()
+                ? reranker.rerank(query, fused, topK)
+                : fused.stream().limit(topK).toList();
+        return new KnowledgeSearchTrace(matches, embeddingMillis, vectorMillis, lexicalMillis, fusionMillis,
+                config.isRerankEnabled() ? elapsedMillis(rerankStartedAt) : 0L, "hybrid");
     }
 
     public int indexedChunkCount() {
@@ -103,5 +126,9 @@ public class KnowledgeService implements KnowledgeRetriever {
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 is unavailable", exception);
         }
+    }
+
+    private long elapsedMillis(long startedAt) {
+        return (System.nanoTime() - startedAt) / 1_000_000L;
     }
 }
